@@ -1,8 +1,8 @@
 # Building A Succinct CQS Data Pipeline
 
-CQS implementations I've seen have always looked incredibly verbose: the number of classes scared me off.
+The CQS implementations I've seen have always looked incredibly verbose: the number of classes scared me.
 
-I recently had cause to revisit CQS on an application re-write and decided to work on creating a more succinct implementation.  This article is about what I managed to achieve.
+I recently had cause to revisit CQS on an application re-write and decided to work on creating a more succinct implementation.  This article is about what I've managed to achieve.
 
 ## Test Data
 
@@ -941,6 +941,8 @@ public async void TestAddCQSDataBroker()
 
 ## Summary
 
+Hopefully I demonstrated a different, more succinct approach to implementing the CQS pattern.  I'm now the converted.  It's replaced my old repository pattern code.
+
 ## Appendix
 
 ### The Data Store
@@ -1011,8 +1013,4 @@ public class InMemoryWeatherDbContext
     }
 }
 ```
- 
-
-
-
 
