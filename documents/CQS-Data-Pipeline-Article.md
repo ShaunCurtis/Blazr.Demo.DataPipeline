@@ -6,7 +6,7 @@ I recently had cause to revisit CQS on an application re-write and decided to wo
 
 ## Test Data
 
-The Appendix contains sections on the data classes and test data provider.
+The Appendix provides a summary of the data classes and test data provider.  There's a full description in the documents section of the repository.
 
 ## The CQS Pattern
 

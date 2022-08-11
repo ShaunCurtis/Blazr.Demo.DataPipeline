@@ -6,10 +6,13 @@ Data classes (often knows as POCO classes) are core domain objects used througho
 
 1. They are value based immutable `records`.
 2. They have a new unique ID field labelled with the `[Key]` attribute for database compatibility.
-3. `TemperatureF` has gone.  It's an internal calculated parameter.  We'll add it back in the business logic.
-4. `Dbo` records map to database table objects.
-5. `Dvo` records map to database view objects.
-6. `GuidExtensions.Null` defines a specific Guid that represents null.  This can be used to test if the record is actually a null record.
+3. All data records implement `IRecord` which provides a simple coding mechanism to identify the Id field in generics. 
+4. `TemperatureF` has gone.  It's an internal calculated parameter.  We'll add it back in the business logic.
+5. `Dbo` records map to database table objects.
+6. `Dvo` records map to database view objects.
+7. `GuidExtensions.Null` defines a specific Guid that represents null.  This can be used to test if the record is actually a null record.
+
+The data classes:
 
 ```csharp
 public record DboWeatherSummary 
@@ -21,22 +24,20 @@ public record DboWeatherSummary
 ```
 ```csharp
 public record DboWeatherLocation
-    : IAuthRecord, IRecord
+    : IRecord
 {
     [Key] public Guid Uid { get; init; }
-    public Guid OwnerId { get; init; }
     public string Location { get; init; } = string.Empty;
 }
 ```
 
 ```csharp
 public record DboWeatherForecast 
-    : IAuthRecord, IRecord
+    : IRecord
 {
     [Key] public Guid Uid { get; init; } = Guid.Empty;
     public Guid WeatherSummaryId { get; init; } = Guid.Empty;
     public Guid WeatherLocationId { get; init; }
-    public Guid OwnerId { get; init; }
     public DateTimeOffset Date { get; init; }
     public int TemperatureC { get; init; }
 }
@@ -44,26 +45,15 @@ public record DboWeatherForecast
 
 ```csharp
 public record DvoWeatherForecast : IRecord
-    : IRecord, IAuthRecord
+    : IRecord
 {
     [Key] public Guid Uid { get; init; }
     public Guid WeatherSummaryId { get; init; }
     public Guid WeatherLocationId { get; init; }
-    public Guid OwnerId { get; init; }
     public DateTimeOffset Date { get; init; }
     public int TemperatureC { get; init; }
     public string Summary { get; init; } = String.Empty;
     public string Location { get; init; } = String.Empty;
-    public string Owner { get; init; } = String.Empty;
-}
-```
-
-```csharp
-public record DboUser
-{
-    [Key] public Guid Id { get; init; } = Guid.Empty;
-    public string Name { get; init; } = String.Empty;
-    public string Role { get; init; } = String.Empty;
 }
 ```
 
@@ -73,15 +63,6 @@ The `IRecord` interface is applied to any record that implements an "Uid" proper
 public interface IRecord 
 {
     public Guid Uid { get; }
-}
-```
-
-The `IAuthRecord` interface to any record that has an ownership field.  This is used to  authorize edit access on a record by record basis.
-
-```csherp
-public interface IAuthRecord 
-{
-    public Guid OwnerId { get; }
 }
 ```
 
@@ -125,7 +106,6 @@ public class InMemoryWeatherDbContext
     public DbSet<DvoWeatherForecast> DvoWeatherForecast { get; set; } = default!;
     public DbSet<DboWeatherSummary> DboWeatherSummary { get; set; } = default!;
     public DbSet<DboWeatherLocation> DboWeatherLocation { get; set; } = default!;
-    public DbSet<DboUser> DboUser { get; set; } = default!;
     public DbSet<FkWeatherSummary> FkWeatherSummary { get; set; } = default!;
     public DbSet<FkWeatherLocation> FkWeatherLocation { get; set; } = default!;
     public InMemoryWeatherDbContext(DbContextOptions<InMemoryWeatherDbContext> options) : base(options) { }
@@ -144,8 +124,6 @@ public class InMemoryWeatherDbContext
                from fsjoin in fs
                join l in this.DboWeatherLocation! on f.WeatherLocationId equals l.Uid into fl
                from fljoin in fl
-               join u in this.DboUser! on f.OwnerId equals u.Id into fu
-               from fujoin in fu
                select new DvoWeatherForecast
                {
                    Uid = f.Uid,
@@ -155,8 +133,6 @@ public class InMemoryWeatherDbContext
                    Summary = fsjoin.Summary,
                    Location = fljoin.Location,
                    TemperatureC = f.TemperatureC,
-                   OwnerId = f.OwnerId,
-                   Owner = fujoin.Name
                })
             .HasKey(x => x.Uid);
 
@@ -265,7 +241,6 @@ public class WeatherTestDataProvider
     public IEnumerable<DboWeatherForecast> WeatherForecasts { get; private set; } = Enumerable.Empty<DboWeatherForecast>();
     public IEnumerable<DboWeatherSummary> WeatherSummaries { get; private set; } = Enumerable.Empty<DboWeatherSummary>();
     public IEnumerable<DboWeatherLocation> WeatherLocations { get; private set; } = Enumerable.Empty<DboWeatherLocation>();
-    public IEnumerable<DboUser> Users { get; private set; } = Enumerable.Empty<DboUser>();
 
     private WeatherTestDataProvider()
         => this.Load();
@@ -277,7 +252,6 @@ public class WeatherTestDataProvider
         var weatherForcasts = dbContext.Set<DboWeatherForecast>();
         var weatherSummaries = dbContext.Set<DboWeatherSummary>();
         var weatherLocations = dbContext.Set<DboWeatherLocation>();
-        var users = dbContext.Set<DboUser>();
 
         // Check if we already have a full data set
         // If not clear down any existing data and start again
@@ -287,12 +261,10 @@ public class WeatherTestDataProvider
             dbContext.RemoveRange(weatherSummaries.ToList());
             dbContext.RemoveRange(weatherForcasts.ToList());
             dbContext.RemoveRange(weatherLocations.ToList());
-            dbContext.RemoveRange(users.ToList());
             dbContext.SaveChanges();
             dbContext.AddRange(this.WeatherSummaries);
             dbContext.AddRange(this.WeatherForecasts);
             dbContext.AddRange(this.WeatherLocations);
-            dbContext.AddRange(this.Users);
             dbContext.SaveChanges();
         }
     }
@@ -306,7 +278,6 @@ public class WeatherTestDataProvider
             this.LoadLocations();
             this.LoadSummaries();
             this.LoadForecasts();
-            this.LoadUsers();
         }
     }
 
@@ -329,10 +300,10 @@ public class WeatherTestDataProvider
     private void LoadLocations()
     {
         this.WeatherLocations = new List<DboWeatherLocation> {
-            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Gloucester", OwnerId = new Guid($"00000000-0000-0000-0000-100000000001") },
-            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Capestang", OwnerId = new Guid($"00000000-0000-0000-0000-100000000002")},
-            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Alvor", OwnerId = new Guid($"00000000-0000-0000-0000-100000000003")},
-            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Adelaide", OwnerId = new Guid($"00000000-0000-0000-0000-100000000003")},
+            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Gloucester" },
+            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Capestang"},
+            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Alvor"},
+            new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Adelaide"},
         };
     }
 
@@ -353,24 +324,11 @@ public class WeatherTestDataProvider
                         WeatherLocationId = location.Uid,
                         Date = DateTime.Now.AddDays(index),
                         TemperatureC = Random.Shared.Next(-20, 55),
-                        OwnerId = location.OwnerId,
                     })
                 );
         }
 
         this.WeatherForecasts = forecasts;
-    }
-
-    private void LoadUsers()
-    {
-        this.Users = new List<DboUser> {
-            new DboUser { Id = GuidExtensions.Null, Name="Anonymous"},
-            new DboUser { Id = new Guid("00000000-0000-0000-0000-000000000001"), Name="Visitor", Role= AppAuthorizationPolicies.VisitorRole},
-            new DboUser { Id = new Guid("00000000-0000-0000-0000-100000000001"), Name="User-1", Role=AppAuthorizationPolicies.UserRole},
-            new DboUser { Id = new Guid("00000000-0000-0000-0000-100000000002"), Name="User-2", Role=AppAuthorizationPolicies.UserRole},
-            new DboUser { Id = new Guid("00000000-0000-0000-0000-100000000003"), Name="User-3", Role=AppAuthorizationPolicies.UserRole},
-            new DboUser { Id = new Guid("00000000-0000-0000-0000-200000000001"), Name="Admin", Role=AppAuthorizationPolicies.AdminRole},
-        };
     }
 
     public DboWeatherForecast GetForecast()

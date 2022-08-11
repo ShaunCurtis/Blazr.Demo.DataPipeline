@@ -13,19 +13,14 @@ public readonly struct ListProviderRequest<TRecord>
 
     public int PageSize { get; }
 
-    public CancellationToken CancellationToken { get; }
-
     public string? SortExpressionString { get; }
 
     public string? FilterExpressionString { get; }
-
-    public ItemsProviderRequest Request => new (this.StartIndex, this.PageSize, this.CancellationToken);
 
     public ListProviderRequest()
     {
         StartIndex = 0;
         PageSize = 10000;
-        CancellationToken = new CancellationToken();
         SortExpressionString = null;
         FilterExpressionString = null;
     }
@@ -33,35 +28,15 @@ public readonly struct ListProviderRequest<TRecord>
     {
         StartIndex = startIndex;
         PageSize = pageSize;
-        CancellationToken = new CancellationToken();
         SortExpressionString = null;
         FilterExpressionString = null;
     }
 
-    public ListProviderRequest(int startIndex, int pageSize, CancellationToken cancellationToken, string? sortExpressionString = null, string? filterExpressionString = null)
+    public ListProviderRequest(int startIndex, int pageSize, string? sortExpressionString = null, string? filterExpressionString = null)
     {
         StartIndex = startIndex;
         PageSize = pageSize;
-        CancellationToken = cancellationToken;
         SortExpressionString = sortExpressionString;
-        FilterExpressionString = filterExpressionString;
-    }
-
-    public ListProviderRequest(ItemsProviderRequest request, string? filterExpressionString = null)
-    {
-        StartIndex = request.StartIndex;
-        PageSize = request.Count;
-        CancellationToken = request.CancellationToken;
-        SortExpressionString = null;
-        FilterExpressionString = filterExpressionString;
-    }
-
-    public ListProviderRequest(ListState options, string? filterExpressionString = null)
-    {
-        StartIndex = options.StartIndex;
-        PageSize = options.PageSize;
-        CancellationToken = new CancellationToken();
-        SortExpressionString = options.SortExpression;
         FilterExpressionString = filterExpressionString;
     }
 }

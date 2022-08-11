@@ -15,6 +15,5 @@ global using System.Text;
 global using System.Text.Encodings.Web;
 
 global using Blazr.Core;
-global using Blazr.Core.Validation;
 
 namespace Blazr.App.Core;

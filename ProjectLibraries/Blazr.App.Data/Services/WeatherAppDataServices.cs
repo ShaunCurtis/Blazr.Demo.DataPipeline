@@ -19,10 +19,15 @@ public static class WeatherAppDataServices
         services.AddDbContextFactory<TDbContext>(options);
         services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
 
-        services.AddTransient<IListQueryHandler<DboWeatherLocation>, ListQueryHandler<DboWeatherLocation, InMemoryWeatherDbContext>>();
         services.AddTransient<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
 
         services.AddWeatherServices();
+    }
+
+    public static void AddInMemoryAppServerDataServices(this IServiceCollection services)
+    {
+        Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
+        services.AddWeatherAppServerDataServices<InMemoryWeatherDbContext>(dbOptions);
     }
 
     public static void AddTestData<TDbContext>(IServiceProvider provider) where TDbContext : DbContext

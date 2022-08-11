@@ -11,81 +11,114 @@ public class CQSBrokerTests
     private WeatherTestDataProvider _weatherTestDataProvider;
 
     public CQSBrokerTests()
-    {
-        _weatherTestDataProvider = WeatherTestDataProvider.Instance();
-    }
+        // Creates an instanc of the Test Data provider
+        => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
 
     private ServiceProvider GetServiceProvider()
     {
+        // Creates a Service Collection
         var services = new ServiceCollection();
-        Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
-        services.AddWeatherAppServerDataServices<InMemoryWeatherDbContext>(dbOptions);
+        // Adds the application services to the collection
+        services.AddInMemoryAppServerDataServices();
+        // Creates a Service Provider from the Services collection
+        // This is our DI container
         var provider = services.BuildServiceProvider();
 
-        WeatherAppDataServices.AddTestData(provider);
+        // Adds the test data to the in memory database
+        var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>();
+        if (factory is not null)
+            WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
 
         return provider!;
     }
 
     [Fact]
-    public async void TestListCQSDataBroker()
+    public async void TestWeatherLocationListCQSDataBroker()
     {
+        // Build our DI container
         var provider = GetServiceProvider();
+        //Get the Data Broker
         var broker = provider.GetService<ICQSDataBroker>()!;
 
-        var cancelToken = new CancellationToken();
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 10, cancelToken);
+        // Get the control record count from the Test Data Provider
+        var testRecordCount = _weatherTestDataProvider.WeatherLocations.Count();
+        int pageSize = 10;
+        // Get the expected recordset count.
+        // It should be either the page size or the total record count if that's smaller
+        var testCount = testRecordCount > pageSize ? pageSize : testRecordCount ;
 
-        var query = new RecordListQuery<DvoWeatherForecast>(listRequest);
-        var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
+        // Create a list request
+        var listRequest = new ListProviderRequest<DboWeatherLocation>(0, pageSize);
 
+        // Create a ListQuery and execute the query on the Data Broker against the DboWeatherLocation recordset
+        var query = new ListQuery<DboWeatherLocation>(listRequest);
+        var result = await broker.ExecuteAsync<DboWeatherLocation>(query);
+
+        // Check we have success
         Assert.True(result.Success);
-        Assert.Equal(10, result.Items.Count());
-        Assert.True(result.TotalItemCount == 100);
+        // Check the recordset count
+        Assert.Equal(testCount, result.Items.Count());
+        // Check the total count os correct against the test provider
+        Assert.True(result.TotalItemCount == testRecordCount);
     }
 
     [Fact]
-    public async void TestFilteredListCQSDataBroker()
+    public async void TestDboWeatherForecastListCQSDataBroker()
     {
         var provider = GetServiceProvider();
         var broker = provider.GetService<ICQSDataBroker>()!;
+        var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Count();
+        int pageSize = 10;
+        var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
 
-        var cancelToken = new CancellationToken();
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 2, cancelToken);
+        var listRequest = new ListProviderRequest<DboWeatherForecast>(0, pageSize);
 
-        var summaryId = _weatherTestDataProvider.GetRandomRecord()?.WeatherSummaryId;
-
-        var recordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherSummaryId == summaryId).Count();
-
-        var query = new FilteredListQuery<DvoWeatherForecast>(listRequest, item => item.WeatherSummaryId == summaryId);
-
-        var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
+        var query = new ListQuery<DboWeatherForecast>(listRequest);
+        var result = await broker.ExecuteAsync<DboWeatherForecast>(query);
 
         Assert.True(result.Success);
-        Assert.Equal(2, result.Items.Count());
-        Assert.Equal(recordCount, result.TotalItemCount);
+        Assert.Equal(testCount, result.Items.Count());
+        Assert.True(result.TotalItemCount == testRecordCount);
     }
 
     [Fact]
-    public async void TestCustomListCQSDataBroker()
+    public async void TestDvoWeatherForecastListCQSDataBroker()
     {
         var provider = GetServiceProvider();
-        var handler = provider.GetService<IFilteredListQueryHandler<DvoWeatherForecast>>()!;
+        var broker = provider.GetService<ICQSDataBroker>()!;
+        var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Count();
+        int pageSize = 10;
+        var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
 
-        var cancelToken = new CancellationToken();
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 2, cancelToken);
+        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
 
-        var summaryId = _weatherTestDataProvider.GetRandomRecord()?.WeatherSummaryId;
-
-        var recordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherSummaryId == summaryId).Count();
-
-        var query = new WeatherForecastListQuery(summaryId, listRequest);
-
-        var result = await handler.ExecuteAsync(query);
+        var query = new ListQuery<DvoWeatherForecast>(listRequest);
+        var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
 
         Assert.True(result.Success);
-        Assert.Equal(2, result.Items.Count());
-        Assert.Equal(recordCount, result.TotalItemCount);
+        Assert.Equal(testCount, result.Items.Count());
+        Assert.True(result.TotalItemCount == testRecordCount);
+    }
+
+
+    [Fact]
+    public async void TestFilteredDvoWeatherForecastListCQSDataBroker()
+    {
+        var provider = GetServiceProvider();
+        var broker = provider.GetService<ICQSDataBroker>()!;
+        var locationId = _weatherTestDataProvider.WeatherLocations.First().Uid;
+        var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherLocationId == locationId).Count();
+        int pageSize = 10;
+        var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
+
+        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
+
+        var query = new WeatherForecastListQuery(locationId,listRequest);
+        var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
+
+        Assert.True(result.Success);
+        Assert.Equal(testCount, result.Items.Count());
+        Assert.True(result.TotalItemCount == testRecordCount);
     }
 
     [Fact]
@@ -110,7 +143,7 @@ public class CQSBrokerTests
         var testRecord = _weatherTestDataProvider.GetRandomRecord()!;
         var CompareRecord = _weatherTestDataProvider.GetDvoWeatherForecast(testRecord);
 
-        var query = new RecordGuidKeyQuery<DvoWeatherForecast>(testRecord.WeatherForecastId);
+        var query = new RecordQuery<DvoWeatherForecast>(testRecord.Uid);
         var result = await broker.ExecuteAsync(query);
 
         Assert.True(result.Success);
@@ -119,47 +152,22 @@ public class CQSBrokerTests
     }
 
     [Fact]
-    public async void TestDboRecordCQSDataBroker()
-    {
-        var provider = GetServiceProvider();
-        var broker = provider.GetService<ICQSDataBroker>()!;
-
-        var testRecord = _weatherTestDataProvider.WeatherSummaries.ToArray()[0]!;
-
-        var query = new RecordGuidKeyQuery<DboWeatherSummary>(testRecord.WeatherSummaryId);
-        var result = await broker.ExecuteAsync(query);
-
-        Assert.True(result.Success);
-        Assert.NotNull(result.Record);
-        Assert.Equal(testRecord, result.Record!);
-    }
-
-
-    [Fact]
     public async void TestAddCQSDataBroker()
     {
         var provider = GetServiceProvider();
         var broker = provider.GetService<ICQSDataBroker>()!;
 
         var newRecord = _weatherTestDataProvider.GetForecast();
-        var id = newRecord!.WeatherForecastId;
+        var id = newRecord!.Uid;
 
         var command = new AddRecordCommand<DboWeatherForecast>(newRecord);
         var result = await broker.ExecuteAsync(command);
 
-        var query = new RecordGuidKeyQuery<DvoWeatherForecast>(id);
-        var testRecord = await broker.ExecuteAsync(query);
-        var testRec = testRecord.Record!;
-        var rec = new DboWeatherForecast
-        {
-            WeatherForecastId = testRec.Id,
-            WeatherSummaryId = testRec.WeatherSummaryId,
-            Date = testRec.Date,
-            TemperatureC = testRec.TemperatureC
-        };
+        var query = new RecordQuery<DboWeatherForecast>(id);
+        var checkResult = await broker.ExecuteAsync(query);
 
         Assert.True(result.Success);
-        Assert.Equal(newRecord, rec);
+        Assert.Equal(newRecord, checkResult.Record);
     }
 
     [Fact]
@@ -168,16 +176,15 @@ public class CQSBrokerTests
         var provider = GetServiceProvider();
         var broker = provider.GetService<ICQSDataBroker>()!;
 
-        var cancelToken = new CancellationToken();
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 1000, cancelToken);
-        var query = new RecordListQuery<DvoWeatherForecast>(listRequest);
+        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 10000);
+        var query = new ListQuery<DvoWeatherForecast>(listRequest);
 
         var startRecords = await broker.ExecuteAsync(query);
 
         var deleteRecord = _weatherTestDataProvider.GetRandomRecord()!;
+        var id = deleteRecord.Uid;
 
         var command = new DeleteRecordCommand<DboWeatherForecast>(deleteRecord);
-        var id = deleteRecord.WeatherForecastId;
         var result = await broker.ExecuteAsync(command);
 
         var endRecords = await broker.ExecuteAsync(query);
@@ -192,20 +199,19 @@ public class CQSBrokerTests
         var provider = GetServiceProvider();
         var broker = provider.GetService<ICQSDataBroker>()!;
 
-        var cancelToken = new CancellationToken();
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 1000, cancelToken);
-        var query = new RecordListQuery<DvoWeatherForecast>(listRequest);
+        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, 10000);
+        var query = new ListQuery<DvoWeatherForecast>(listRequest);
 
         var startRecords = await broker.ExecuteAsync(query);
 
         var editedRecord = _weatherTestDataProvider.GetRandomRecord()! with { Date = DateTime.Now.AddDays(10) };
         var editedDvoRecord = _weatherTestDataProvider.GetDvoWeatherForecast(editedRecord);
-        var id = editedRecord.WeatherForecastId;
+        var id = editedRecord.Uid;
 
         var command = new UpdateRecordCommand<DboWeatherForecast>(editedRecord);
         var result = await broker.ExecuteAsync(command);
 
-        var recordQuery = new RecordGuidKeyQuery<DvoWeatherForecast>(id);
+        var recordQuery = new RecordQuery<DvoWeatherForecast>(id);
         var updatedRecord = await broker.ExecuteAsync(recordQuery);
 
         Assert.True(result.Success);

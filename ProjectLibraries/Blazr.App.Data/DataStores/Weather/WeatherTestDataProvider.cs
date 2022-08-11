@@ -119,6 +119,7 @@ public class WeatherTestDataProvider
 
     public DboWeatherForecast? GetRandomRecord()
     {
+        var record = new DboWeatherForecast();
         if (this.WeatherForecasts.Count() > 0)
         {
             var ran = new Random().Next(0, WeatherForecasts.Count());
@@ -136,7 +137,8 @@ public class WeatherTestDataProvider
             WeatherSummaryId = record.WeatherSummaryId,
             Date = record.Date,
             TemperatureC = record.TemperatureC,
-            Summary = this.WeatherSummaries.SingleOrDefault(item => item.Uid == record.Uid)?.Summary ?? String.Empty
+            Location = this.WeatherLocations.SingleOrDefault(item => item.Uid == record.WeatherLocationId)?.Location ?? string.Empty,
+            Summary = this.WeatherSummaries.SingleOrDefault(item => item.Uid == record.WeatherSummaryId)?.Summary ?? string.Empty
         };
     }
 
