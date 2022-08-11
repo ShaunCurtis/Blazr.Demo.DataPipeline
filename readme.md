@@ -1,4 +1,4 @@
-# Building A Succinct CQS Data Pipeline
+# Building A Succinct DoteNetCore CQS Data Pipeline
 
 The CQS implementations I've seen have always looked incredibly verbose: the number of classes scared me.
 
