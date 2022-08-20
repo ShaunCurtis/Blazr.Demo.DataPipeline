@@ -22,14 +22,14 @@ public class WeatherForecastListQueryHandler<TDbContext>
     public async ValueTask<ListProviderResult<DvoWeatherForecast>> ExecuteAsync(IListQuery<DvoWeatherForecast> query)
     {
         if (query is null || query is not WeatherForecastListQuery)
-            return new ListProviderResult<DvoWeatherForecast>(new List<DvoWeatherForecast>(), 0, false, "No Query Defined");
+            return ListProviderResult<DvoWeatherForecast>.Failure("No Query Defined");
 
         listQuery = (WeatherForecastListQuery)query;
 
         if (await this.GetItemsAsync())
             await this.GetCountAsync();
 
-        return new ListProviderResult<DvoWeatherForecast>(this.items, this.count);
+        return ListProviderResult<DvoWeatherForecast>.Successful(this.items, this.count);
     }
 
     protected virtual async ValueTask<bool> GetItemsAsync()
@@ -39,7 +39,7 @@ public class WeatherForecastListQueryHandler<TDbContext>
 
         IQueryable<DvoWeatherForecast> query = dbContext.Set<DvoWeatherForecast>();
 
-        if (listQuery.WeatherLocationId is not null && listQuery.WeatherLocationId != Guid.Empty)
+        if (listQuery.WeatherLocationId != Guid.Empty)
             query = query
                 .Where(item => item.WeatherLocationId == listQuery.WeatherLocationId)
                 .AsQueryable();
@@ -67,7 +67,7 @@ public class WeatherForecastListQueryHandler<TDbContext>
 
         IQueryable<DvoWeatherForecast> query = dbContext.Set<DvoWeatherForecast>();
 
-        if (listQuery.WeatherLocationId is not null && listQuery.WeatherLocationId != Guid.Empty)
+        if (listQuery.WeatherLocationId != Guid.Empty)
             query = query
                 .Where(item => item.WeatherLocationId == listQuery.WeatherLocationId)
                 .AsQueryable();

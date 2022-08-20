@@ -22,10 +22,10 @@ public class FKListQueryHandler<TRecord, TDbContext>
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         if (listQuery is null)
-            return new FKListProviderResult(Enumerable.Empty<IFkListItem>(), false, "No Query defined");
+            return FKListProviderResult.Failure("No Query defined");
 
         IEnumerable<TRecord> dbSet = await dbContext.Set<TRecord>().ToListAsync();
 
-        return new FKListProviderResult(dbSet);
+        return FKListProviderResult.Successful(dbSet);
     }
 }

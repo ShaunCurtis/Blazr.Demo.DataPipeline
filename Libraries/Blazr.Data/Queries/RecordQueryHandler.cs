@@ -11,8 +11,6 @@ public class RecordQueryHandler<TRecord, TDbContext>
         where TDbContext : DbContext
 {
     private IDbContextFactory<TDbContext> _factory;
-    private bool _success = true;
-    private string _message = string.Empty;
 
     public RecordQueryHandler(IDbContextFactory<TDbContext> factory)
         =>  _factory = factory;
@@ -29,24 +27,12 @@ public class RecordQueryHandler<TRecord, TDbContext>
             record = await dbContext.Set<TRecord>().SingleOrDefaultAsync(item => ((IRecord)item).Uid == query.GuidId);
 
         // Try and use the EF FindAsync implementation
-        if (record == null)
-        {
-            if (query.GuidId != Guid.Empty)
+        if (record is null)
                 record = await dbContext.FindAsync<TRecord>(query.GuidId);
 
-            if (query.LongId > 0)
-                record = await dbContext.FindAsync<TRecord>(query.LongId);
-
-            if (query.IntId > 0)
-                record = await dbContext.FindAsync<TRecord>(query.IntId);
-        }
-
         if (record is null)
-        {
-            _message = "No record retrieved";
-            _success = false;
-        }
+            return RecordProviderResult<TRecord>.Failure("No record retrieved");
 
-        return new RecordProviderResult<TRecord>(record, _success, _message);
+        return RecordProviderResult<TRecord>.Successful(record);
     }
 }

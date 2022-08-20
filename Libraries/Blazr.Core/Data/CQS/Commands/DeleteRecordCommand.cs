@@ -10,6 +10,8 @@ public class DeleteRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
     where TRecord : class, new()
 {
-    public DeleteRecordCommand(TRecord record) : base(record)
-    {}
+    private DeleteRecordCommand() { }
+
+    public static DeleteRecordCommand<TRecord> GetCommand(TRecord record)
+        => new DeleteRecordCommand<TRecord> { Record = record };
 }

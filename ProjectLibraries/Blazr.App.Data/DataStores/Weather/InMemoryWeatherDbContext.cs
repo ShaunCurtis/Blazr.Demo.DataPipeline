@@ -20,6 +20,8 @@ public class InMemoryWeatherDbContext
 
     public DbSet<FkWeatherLocation> FkWeatherLocation { get; set; } = default!;
 
+    public DbSet<DboIdentity> DboIdentity { get; set; } = default!;
+
     public InMemoryWeatherDbContext(DbContextOptions<InMemoryWeatherDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,6 +29,7 @@ public class InMemoryWeatherDbContext
         modelBuilder.Entity<DboWeatherForecast>().ToTable("WeatherForecast");
         modelBuilder.Entity<DboWeatherSummary>().ToTable("WeatherSummary");
         modelBuilder.Entity<DboWeatherLocation>().ToTable("WeatherLocation");
+        modelBuilder.Entity<DboIdentity>().ToTable("Identity");
 
         modelBuilder.Entity<DvoWeatherForecast>()
             .ToInMemoryQuery(()

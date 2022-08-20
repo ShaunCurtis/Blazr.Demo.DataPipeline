@@ -21,7 +21,7 @@ public class UpdateRecordCommandHandler<TRecord, TDbContext>
         using var dbContext = factory.CreateDbContext();
         dbContext.Update<TRecord>(command.Record);
         return await dbContext.SaveChangesAsync() == 1
-            ? new CommandResult(Guid.Empty, true, "Record Saved")
-            : new CommandResult(Guid.Empty, false, "Error saving Record");
+            ? CommandResult.Successful("Record Updated")
+            : CommandResult.Failure("Error updating Record");
     }
 }

@@ -15,6 +15,8 @@ public class WeatherTestDataProvider
 
     public IEnumerable<DboWeatherLocation> WeatherLocations { get; private set; } = Enumerable.Empty<DboWeatherLocation>();
 
+    public IEnumerable<DboIdentity> Identities { get; private set; } = Enumerable.Empty<DboIdentity>();
+
     private WeatherTestDataProvider()
         => this.Load();
 
@@ -25,6 +27,7 @@ public class WeatherTestDataProvider
         var weatherForcasts = dbContext.Set<DboWeatherForecast>();
         var weatherSummaries = dbContext.Set<DboWeatherSummary>();
         var weatherLocations = dbContext.Set<DboWeatherLocation>();
+        var identities = dbContext.Set<DboIdentity>();
 
         // Check if we already have a full data set
         // If not clear down any existing data and start again
@@ -34,10 +37,12 @@ public class WeatherTestDataProvider
             dbContext.RemoveRange(weatherSummaries.ToList());
             dbContext.RemoveRange(weatherForcasts.ToList());
             dbContext.RemoveRange(weatherLocations.ToList());
+            dbContext.RemoveRange(identities.ToList());
             dbContext.SaveChanges();
             dbContext.AddRange(this.WeatherSummaries);
             dbContext.AddRange(this.WeatherForecasts);
             dbContext.AddRange(this.WeatherLocations);
+            dbContext.AddRange(this.Identities);
             dbContext.SaveChanges();
         }
     }
@@ -51,6 +56,7 @@ public class WeatherTestDataProvider
             this.LoadLocations();
             this.LoadSummaries();
             this.LoadForecasts();
+            this.LoadIdentities();
         }
     }
 
@@ -77,6 +83,16 @@ public class WeatherTestDataProvider
             new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Capestang"},
             new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Alvor"},
             new DboWeatherLocation { Uid = Guid.NewGuid(), Location = "Adelaide"},
+        };
+    }
+
+    private void LoadIdentities()
+    {
+        this.Identities = new List<DboIdentity> {
+            new DboIdentity { Id = Guid.Empty, Name="Anonymous"},
+            new DboIdentity { Id = new Guid("00000000-0000-0000-0000-000000000001"), Name="Visitor", Role= "VisitorRole"},
+            new DboIdentity { Id = new Guid("00000000-0000-0000-0000-100000000001"), Name="User", Role="UserRole"},
+            new DboIdentity { Id = new Guid("00000000-0000-0000-0000-200000000001"), Name="Admin", Role="AdminRole"},
         };
     }
 

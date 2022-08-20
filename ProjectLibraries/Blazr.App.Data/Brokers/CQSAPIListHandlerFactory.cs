@@ -44,7 +44,7 @@ public class CQSAPIListHandlerFactory : ICQSAPIListHandlerFactory
         if (response.IsSuccessStatusCode)
             result = await response.Content.ReadFromJsonAsync<ListProviderResult<TRecord>>();
 
-        return result ?? new ListProviderResult<TRecord>();
+        return result ?? ListProviderResult<TRecord>.Failure("Error getting data");
     }
 
     private async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(ListQuery<TRecord> query) where TRecord : class, new()
@@ -57,6 +57,6 @@ public class CQSAPIListHandlerFactory : ICQSAPIListHandlerFactory
         if (response.IsSuccessStatusCode)
             result = await response.Content.ReadFromJsonAsync<ListProviderResult<TRecord>>();
 
-        return result ?? new ListProviderResult<TRecord>();
+        return result ?? ListProviderResult<TRecord>.Failure("Error getting data");
     }
 }

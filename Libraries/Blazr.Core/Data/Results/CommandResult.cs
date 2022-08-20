@@ -8,22 +8,20 @@ namespace Blazr.Core;
 
 public record CommandResult
 {
-    public Guid NewId { get; init; }
-    public bool Success { get; init; }
+    public Guid NewId { get; init; } = Guid.Empty;
+
+    public bool Success { get; init; } = false;
+
     public string Message { get; init; } = string.Empty;
 
-    public CommandResult() { }
+    private CommandResult() {}
 
-    public CommandResult( Guid newId, bool success, string message)
-    {
-        NewId = newId;
-        Success = success;
-        Message = message;
-    }
-    public CommandResult(bool success)
-    {
-        NewId = Guid.Empty;
-        Success = success;
-        Message = "The command completed successfully";
-    }
+    public static CommandResult Failure(string message)
+        => new CommandResult { Message= message };
+
+    public static CommandResult Successful(string? message = null)
+        => new CommandResult {Success = true, Message = message ?? "The command completed successfully" };
+
+    public static CommandResult Successful(Guid? Uid= null,  string? message =null)
+        => new CommandResult { NewId = Uid ?? Guid.Empty, Message = message ?? "The command completed successfully", Success= true };
 }

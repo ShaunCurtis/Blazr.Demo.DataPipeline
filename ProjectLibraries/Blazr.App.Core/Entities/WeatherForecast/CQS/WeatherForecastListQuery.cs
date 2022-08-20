@@ -1,4 +1,6 @@
-﻿/// ============================================================
+﻿
+using Blazr.Core;
+/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
@@ -9,21 +11,17 @@ namespace Blazr.App.Core;
 public record WeatherForecastListQuery
     : ListQueryBase<DvoWeatherForecast>
 {
-    public Guid? WeatherLocationId { get; init; }
+    public Guid WeatherLocationId { get; init; }
 
-    public WeatherForecastListQuery()
-    : base()
-        => WeatherLocationId = Guid.Empty;
+    private WeatherForecastListQuery() { }
 
-
-    public WeatherForecastListQuery(Guid? weatherLocationId, ListProviderRequest<DvoWeatherForecast> request)
-        : base(request)
-    {
-        if (weatherLocationId is not null && weatherLocationId != Guid.Empty)
-            WeatherLocationId = weatherLocationId;
-    }
-
-    public WeatherForecastListQuery(ListProviderRequest<DvoWeatherForecast> request)
-        :base(request)
-        => WeatherLocationId = Guid.Empty;
+    public static WeatherForecastListQuery GetQuery(Guid weatherLocationId, ListProviderRequest<DvoWeatherForecast> request)
+        => new WeatherForecastListQuery
+        {
+            StartIndex = request.StartIndex,
+            PageSize = request.PageSize,
+            SortExpressionString = request.SortExpressionString,
+            FilterExpressionString = request.FilterExpressionString,
+            WeatherLocationId = weatherLocationId,
+        };
 }

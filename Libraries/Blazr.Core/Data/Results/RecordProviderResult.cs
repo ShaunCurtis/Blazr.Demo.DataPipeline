@@ -8,21 +8,17 @@ namespace Blazr.Core;
 
 public record RecordProviderResult<TRecord>
 {
-    public TRecord? Record { get; init; }
-     
-    public bool Success { get; init; }
+    public TRecord? Record { get; init; } = default(TRecord?);
 
-    public string? Message { get; init; }
+    public bool Success { get; init; } = false;
 
-    public RecordProviderResult() { }
+    public string Message { get; init; } = string.Empty;
 
-    public RecordProviderResult(TRecord? record, bool success = true, string? message = null)
-    {
-        this.Record = record;
-        this.Success = success;
-        if (record is null)
-            this.Success = false;
-        
-        this.Message = message;
-    }
+    protected RecordProviderResult() { }
+
+    public static RecordProviderResult<TRecord> Failure(string message)
+        => new RecordProviderResult<TRecord> { Message = message };
+
+    public static RecordProviderResult<TRecord> Successful(TRecord record, string? message = null)
+        => new RecordProviderResult<TRecord> { Record= record, Success = true, Message = message ?? "The query completed successfully" };
 }

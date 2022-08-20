@@ -8,18 +8,17 @@ namespace Blazr.Core;
 
 public record RecordCountProviderResult
 {
-    public int Count { get; init; }
-     
-    public bool Success { get; init; }
+    public int Count { get; init; } = 0;
 
-    public string? Message { get; init; }
+    public bool Success { get; init; } = false;
 
-    public RecordCountProviderResult() { }
+    public string Message { get; init; } = string.Empty;
 
-    public RecordCountProviderResult(int count, bool success = true, string? message = null)
-    {
-        this.Count = count;
-        this.Success = success;
-        this.Message = message;
-    }
+    private RecordCountProviderResult() { }
+
+    public static RecordCountProviderResult Failure(string message)
+    => new RecordCountProviderResult { Message = message };
+
+    public static RecordCountProviderResult Successful(int count, string? message = null)
+        => new RecordCountProviderResult { Count = count, Success = true, Message = message ?? "The query completed successfully" };
 }

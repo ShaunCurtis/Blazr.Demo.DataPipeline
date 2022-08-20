@@ -23,14 +23,14 @@ public class ListQueryHandler<TRecord, TDbContext>
     public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync(IListQuery<TRecord> query)
     {
         if (query is null)
-            return new ListProviderResult<TRecord>(new List<TRecord>(), 0, false, "No Query Defined");
+            return ListProviderResult<TRecord>.Failure("No Query Defined");
 
         listQuery = query;
 
         if (await this.GetItemsAsync())
             await this.GetCountAsync();
 
-        return new ListProviderResult<TRecord>(this.items, this.count);
+        return ListProviderResult<TRecord>.Successful(this.items, this.count);
     }
 
     protected virtual async ValueTask<bool> GetItemsAsync()

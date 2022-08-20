@@ -3,18 +3,15 @@
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
+namespace Blazr.App.Core;
 
-namespace Blazr.Core;
-
-public record RecordQuery<TRecord>
-    : ICQSRequest<ValueTask<RecordProviderResult<TRecord>>>
+public record IdentityQuery
+    : ICQSRequest<ValueTask<IdentityRequestResult>>
 {
     public Guid TransactionId { get; } = Guid.NewGuid();
 
-    public Guid GuidId { get; init; }
+    public Guid IdentityId { get; init; } = Guid.Empty;
 
-    protected RecordQuery() { }
-
-    public static RecordQuery<TRecord> GetQuery(Guid recordId)
-        => new RecordQuery<TRecord> { GuidId = recordId };
+    public static IdentityQuery GetQuery(Guid Uid)
+        => new IdentityQuery { IdentityId = Uid };
 }

@@ -20,7 +20,7 @@ public class AddRecordCommandHandler<TRecord, TDbContext>
         using var dbContext = factory.CreateDbContext();
         dbContext.Add<TRecord>(command.Record);
         return await dbContext.SaveChangesAsync() == 1
-            ? new CommandResult(Guid.Empty, true, "Record Saved")
-            : new CommandResult(Guid.Empty, false, "Error saving Record");
+            ? CommandResult.Successful("Record Saved")
+            : CommandResult.Failure("Error saving Record");
     }
 }

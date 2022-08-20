@@ -21,7 +21,7 @@ public class DeleteRecordCommandHandler<TRecord, TDbContext>
         using var dbContext = factory.CreateDbContext();
         dbContext.Remove<TRecord>(command.Record);
         return await dbContext.SaveChangesAsync() == 1
-            ? new CommandResult(Guid.Empty, true, "Record Saved")
-            : new CommandResult(Guid.Empty, false, "Error saving Record");
+            ? CommandResult.Successful("Record Deleted")
+            : CommandResult.Failure("Error deleting Record");
     }
 }

@@ -20,13 +20,5 @@ public abstract record ListQueryBase<TRecord>
 
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public ListQueryBase() { }
-
-    public ListQueryBase(ListProviderRequest<TRecord> request)
-    {
-        this.StartIndex = request.StartIndex;
-        this.PageSize = request.PageSize;
-        this.SortExpressionString = request.SortExpressionString;
-        this.FilterExpressionString = request.FilterExpressionString;
-    }
+    protected ListQueryBase() { }
 }

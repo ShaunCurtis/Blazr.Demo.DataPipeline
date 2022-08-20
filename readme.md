@@ -14,7 +14,7 @@ The data repository associated with this is here: [Blazr.Demo.DataPipeline](http
 
 The implementation is used in my demo Blazor application which is here: [Blazr.Demo](https://github.com/ShaunCurtis/Blazr.Demo).
 
-## The CQS Pattern
+## Introduction
 
 CQS - not to be confused with CQRS - is fundimentally a programming style.  Every action is either:
 
@@ -37,13 +37,13 @@ In essence:
 
 - A *Handler* object executes the necessary code and returns the defined *Result* using data provided by the *Request*.  
 
-Conceptually it's very simple, and relatively easy to implement.  The problem which I've already stated is it's very verbose.  A request and a handler for every single database action. Lots of classes repeating the same old code.  Here's an example:
+Conceptually it's very simple, and relatively easy to implement.  The problem which I've already stated is it's very verbose.  A request and a handler for every single database action. Lots of classes repeating the same old code.
 
-![Verbose CQS](./documents/images/verbose-cqs.png)
+The solution consists of a set of libraries organised on Clean Design principles.  It's designed to work in any DotNetCore environment.  `Blazr.Core` and `Blazr.Data` are the two base libraries that can be used for any implementation.  `Blazr.Demo.Core` and `Blazr.Demo.Data` are the two application specific backend libraries.
 
-*Sincere apologies if you recognise this as your code!  I searched Google for an example and your article was high in the search results.*
+The front end application is a XUnit test project that there to demonstrate as much as to test.  I use it in Blazor projects. 
 
-## Basic Interfaces and Classes
+## Interfaces and Base Classes
 
 The basic methodology can be defined by two generic interfaces.
 
@@ -73,62 +73,17 @@ public interface ICQSHandler<in TRequest, out TResult>
 }
 ```
 
-## A Classic Implementation
+To build a more succinct implementation:
 
-Here's a classic implementation to add a `WeatherForecast` record.
-
-`AddWeatherForecastCommand` is the request :
-
-```csharp
-public class AddWeatherForecastCommand
-    : ICQSRequest<ValueTask<CommandResult>>
-{
-    public DboWeatherForecast Record { get; private set; } = default!;
-
-    public AddWeatherForecastCommand(DboWeatherForecast record)
-        => this.Record = record;
-}
-```
-
-`AddWeatherForecastHandler` is the handler:
-
-```csharp
-public class AddWeatherForecastHandler
-    : ICQSHandler<AddWeatherForecastCommand, ValueTask<CommandResult>>
-{
-    protected readonly IWeatherDbContext dbContext;
-    protected readonly AddWeatherForecastCommand command;
-
-    public AddWeatherForecastHandler(IWeatherDbContext dbContext, AddWeatherForecastCommand command)
-    {
-        this.command = command;
-        this.dbContext = dbContext;
-    }
-
-    public async ValueTask<CommandResult> ExecuteAsync()
-    {
-        if (command.Record is not null)
-            this.dbContext.DboWeatherForecast.Add(this.command.Record);
-
-        return await dbContext.SaveChangesAsync() == 1
-            ? new CommandResult(Guid.Empty, true, "Record Saved")
-            : new CommandResult(Guid.Empty, false, "Error saving Record");
-    }
-}
-```
-
-## A Succinct Implementation
-
-To build a more succinct implementation we need some help and accept that we can't cover every request:
-
- - The 80/20 rule.  Not every request can be fulfilled with our our standard implementation, but 80% is a lot of effort and classes to save on.
- - We need a "compliant" generics based ORM to interface with our data store.  This implementation uses *Entity Framework* which provides that. 
- - There will be some quite complicated generics implemented in the base classes to abstract functionality into boilerplate code.
+ - Accept The 80/20 rule.  Not every request can be fulfilled with our our standard implementation, but 80% is a lot of effort and classes to save on.
+ - Need a methodology for the 20%.
+ - Need a "compliant" generics based ORM to interface with our data store.  This implementation uses *Entity Framework* which provides that. 
+ - Accept there will be some quite complicated generics implemented in the base classes to abstract functionality into boilerplate code.
 
 
 ## Results
 
-Before diving into requests and handlers, we need a set of standard results they return: `TResult` of the request.  Each is a `record` and contains status information and, if a request, the data set.  They are used in Web APIs so must be serializable.  They are shown below and need no explanation.
+The requests need a set of standard results to return: `TResult` of the request.  They are defined as `record` with static constructors and contains status information and, if a query, a data set.  They must be serializable to use in APIs.  Each is shown below:
 
 ```csharp
 public record ListProviderResult<TRecord>
@@ -168,6 +123,8 @@ public record FKListProviderResult
 }
 ```
 
+All implement static constructors to tightly control the content.
+
 ## Base Classes
 
 `TRecord` represents the data classes retrieved from the data store using the ORM.  It's qualified as a `class` that implements an empty constructor `new()`.
@@ -188,7 +145,7 @@ All commands:
 1. Take a record which we define as `TRecord`.
 2. Fix `TResult` as an async `ValueTask<CommandResult>`.
 
-First an interface that implements `ICQSRequest` and this functionality.
+An interface that implements `ICQSRequest` and this functionality.
 
 ```csharp
 public interface IRecordCommand<TRecord> 
@@ -207,38 +164,45 @@ public abstract class RecordCommandBase<TRecord>
     public Guid TransactionId { get; } = Guid.NewGuid(); 
     public TRecord Record { get; protected set; } = default!;
 
-    public RecordCommandBase(TRecord record)
-        => this.Record = record;
+    protected RecordCommandBase() { }
 }
 ```
 
-We can now define the Add/Delete/Update specific commands.
+We can now define the Add/Delete/Update specific commands.  All use static constructors to control and validate content.  There needs to be a one-to-one relationship (requests -> handlers) so we define a handler for each type of command.
+
 
 ```csharp
 public class AddRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
 {
-    public AddRecordCommand(TRecord record) : base(record) {}
+    private AddRecordCommand() { }
+
+    public static AddRecordCommand<TRecord> GetCommand(TRecord record)
+        => new AddRecordCommand<TRecord> { Record = record };
 }
 ```
 ```csharp
 public class DeleteRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
 {
-    public DeleteRecordCommand(TRecord record) : base(record) {}
+    private DeleteRecordCommand() { }
+
+    public static DeleteRecordCommand<TRecord> GetCommand(TRecord record)
+        => new DeleteRecordCommand<TRecord> { Record = record };
 }
 ```
 ```csharp
 public class UpdateRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
 {
-    public UpdateRecordCommand(TRecord record) : base(record) {}
+    private UpdateRecordCommand() { }
+
+    public static UpdateRecordCommand<TRecord> GetCommand(TRecord record)
+        => new UpdateRecordCommand<TRecord> { Record = record };
 }
 ```
 
-We need a one-to-one relationship (requests -> handlers) so we define a handler for each type of command.
-
-### The Handlers
+#### Command Handlers
 
 There's no benefit in creating interfaces or base classes for handlers so we implement Create/Update/Delete commands as three separate classes.  `TRecord` defines the record class and `TDbContext` the `DbContext` used in the DI `DbContextFactory`.
 
@@ -271,13 +235,13 @@ public class AddRecordCommandHandler<TRecord, TDbContext>
         using var dbContext = factory.CreateDbContext();
         dbContext.Add<TRecord>(command.Record);
         return await dbContext.SaveChangesAsync() == 1
-            ? new CommandResult(Guid.Empty, true, "Record Saved")
-            : new CommandResult(Guid.Empty, false, "Error saving Record");
+            ? CommandResult.Successful("Record Saved")
+            : CommandResult.Failure("Error saving Record");
     }
 }
 ``` 
 
-## Queries
+### Queries
 
 Queries aren't quite so uniform.
 
@@ -286,7 +250,7 @@ Queries aren't quite so uniform.
 
 To handle these requirements we define three Query requests:
 
-### RecordQuery
+#### RecordQuery
 
 This returns a `RecordProviderResult` containing a single record based on a provided Uid.
 
@@ -295,14 +259,16 @@ public record RecordQuery<TRecord>
     : ICQSRequest<ValueTask<RecordProviderResult<TRecord>>>
 {
     public Guid TransactionId { get; } = Guid.NewGuid();
-    public readonly Guid? RecordId;
+    public Guid GuidId { get; init; }
 
-    public RecordQuery(Guid? recordId)
-        => this.RecordId = recordId;
+    protected RecordQuery() { }
+
+    public static RecordQuery<TRecord> GetQuery(Guid recordId)
+        => new RecordQuery<TRecord> { GuidId = recordId };
 }
 ```
 
-### ListQuery
+#### ListQuery
 
 This returns a `ListProviderResult` containing a *paged* `IEnumerable` of `TRecord`.
 
@@ -333,15 +299,7 @@ public abstract record ListQueryBase<TRecord>
     public string? FilterExpressionString { get; init; }
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public ListQueryBase() { }
-
-    public ListQueryBase(ListProviderRequest<TRecord> request)
-    {
-        this.StartIndex = request.StartIndex;
-        this.PageSize = request.PageSize;
-        this.SortExpressionString = request.SortExpressionString;
-        this.FilterExpressionString = request.FilterExpressionString;
-    }
+    protected ListQueryBase() { }
 }
 ```
 
@@ -352,16 +310,20 @@ public record ListQuery<TRecord>
     :ListQueryBase<TRecord>
     where TRecord : class, new()
 {
-    public ListQuery() { }
-
-    public ListQuery(ListProviderRequest<TRecord> request)
-        :base(request) { }
+    public static ListQuery<TRecord> GetQuery(ListProviderRequest<TRecord> request)
+        => new ListQuery<TRecord>
+        {
+            StartIndex = request.StartIndex,
+            PageSize = request.PageSize,
+            SortExpressionString = request.SortExpressionString,
+            FilterExpressionString = request.FilterExpressionString
+        };
 }
 ```
 
 We separate the code into the interface/abstract base class pattern so can implement custom List queries.  If these inherit from `ListQuery`, we run into issues with factories and pattern matching methods.  Using a base class to implement the boilerplate code solves this problem.
 
-### FKListQuery
+#### FKListQuery
 
 This returns a `FkListProviderResult` containing an `IEnumerable` of `IFkListItem`.  `FkListItem` is a simple object containing a *Guid/Name* pair.  It's principle use is in foreign key *Select* controls in the UI.
 
@@ -373,11 +335,11 @@ public record FKListQuery<TRecord>
 }
 ```
 
-## Handlers
+### Query Handlers
 
 The corresponding query handlers are:
 
-### RecordQueryHandler
+#### RecordQueryHandler
 
 Creating a "generic" version can be challenging depending on the ORM.
 
@@ -394,8 +356,6 @@ public class RecordQueryHandler<TRecord, TDbContext>
         where TDbContext : DbContext
 {
     private IDbContextFactory<TDbContext> _factory;
-    private bool _success = true;
-    private string _message = string.Empty;
 
     public RecordQueryHandler(IDbContextFactory<TDbContext> factory)
         =>  _factory = factory;
@@ -412,30 +372,18 @@ public class RecordQueryHandler<TRecord, TDbContext>
             record = await dbContext.Set<TRecord>().SingleOrDefaultAsync(item => ((IRecord)item).Uid == query.GuidId);
 
         // Try and use the EF FindAsync implementation
-        if (record == null)
-        {
-            if (query.GuidId != Guid.Empty)
+        if (record is null)
                 record = await dbContext.FindAsync<TRecord>(query.GuidId);
 
-            if (query.LongId > 0)
-                record = await dbContext.FindAsync<TRecord>(query.LongId);
-
-            if (query.IntId > 0)
-                record = await dbContext.FindAsync<TRecord>(query.IntId);
-        }
-
         if (record is null)
-        {
-            _message = "No record retrieved";
-            _success = false;
-        }
+            return RecordProviderResult<TRecord>.Failure("No record retrieved");
 
-        return new RecordProviderResult<TRecord>(record, _success, _message);
+        return RecordProviderResult<TRecord>.Successful(record);
     }
 }
 ```
 
-### ListQueryHandler
+#### ListQueryHandler
 
 The key concepts to note here are:
 
@@ -443,6 +391,7 @@ The key concepts to note here are:
 2. `_dbContext.Set<TRecord>()` to get the `DbSet` for `TRecord`.
 3. The use of `IQueryable` to build queries.
 4. The need for two queries.  One to get the "paged" recordset and one to get the total record count.
+5. The use of `System.Linq.Dynamic` to do the sorting and filtering.  This will be discussed later.
 
 ```csharp
 public class ListQueryHandler<TRecord, TDbContext>
@@ -462,14 +411,14 @@ public class ListQueryHandler<TRecord, TDbContext>
     public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync(IListQuery<TRecord> query)
     {
         if (query is null)
-            return new ListProviderResult<TRecord>(new List<TRecord>(), 0, false, "No Query Defined");
+            return ListProviderResult<TRecord>.Failure("No Query Defined");
 
         listQuery = query;
 
         if (await this.GetItemsAsync())
             await this.GetCountAsync();
 
-        return new ListProviderResult<TRecord>(this.items, this.count);
+        return ListProviderResult<TRecord>.Successful(this.items, this.count);
     }
 
     protected virtual async ValueTask<bool> GetItemsAsync()
@@ -522,7 +471,7 @@ public class ListQueryHandler<TRecord, TDbContext>
 }
 ```
 
-### FKListQueryHandler
+#### FKListQueryHandler
 
 ```csharp
 public class FKListQueryHandler<TRecord, TDbContext>
@@ -542,26 +491,33 @@ public class FKListQueryHandler<TRecord, TDbContext>
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         if (listQuery is null)
-            return new FKListProviderResult(Enumerable.Empty<IFkListItem>(), false, "No Query defined");
+            return FKListProviderResult.Failure("No Query defined");
 
         IEnumerable<TRecord> dbSet = await dbContext.Set<TRecord>().ToListAsync();
 
-        return new FKListProviderResult(dbSet);
+        return FKListProviderResult.Successful(dbSet);
     }
 }
 ```
 
-## The Generic Factory Broker
+## Implementing the Handlers
 
-We can now define a factory interface and class to abstract the execution of *Requests* against their respective *Handlers*.  I call these *Brokers*.
+The handlers are designed to be use in two ways:
 
-The intention is to code the broker with a single method `ExecuteAsync(Request)`.  Internally the broker matches the request to it's handler, executes the request and provides the expected result.
+1. Individually as dependancy injected services.
+2. Though a dependancy injected factory.
+
+we'll see both used in testing.
+
+### The Generic Factory Broker
+
+The broker is code with a single method `ExecuteAsync(Request)`, with an implementation for each request which uses the correct handler, executes the request and provides the expected result.
 
 ```csharp
 var TResult = await DataBrokerInstance.ExecuteAsync<TRecord>(TRequest);
 ```
 
-First we define an interface:
+First the interface used to define the service in DI:
 
 ```csharp
 public interface ICQSDataBroker
@@ -622,41 +578,137 @@ public class CQSDataBroker<TDbContext>
 }
 ```
 
-Note that there's a catch all method defined that throws an expection. 
+Note the catch all method that throws an expection. 
 
-### Custom Requests
+### Testing the Broker
 
-I'll use filtering the WeatherForecast list on the Location here to demonstrate how to customize the code: it's probably the most common custom requirement. 
+#### SetUp
 
-`IListQuery` and `ListQueryBase` has everything we need to the location Id.  
+Here's the setup for the Broker demo tests.  It sets up a DI services container and passes the instance to the test.
 
-Our custom query:
+
+```csharp
+public CQSBrokerTests()
+    // Creates an instance of the Test Data provider
+    => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
+
+private ServiceProvider GetServiceProvider()
+{
+    // Creates a Service Collection
+    var services = new ServiceCollection();
+
+    // Adds the application services to the collection
+    Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
+    services.AddDbContextFactory<TDbContext>(options);
+    services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
+
+    // Creates a Service Provider from the Services collection
+    // This is our DI container
+    var provider = services.BuildServiceProvider();
+
+    // Adds the test data to the in memory database
+    var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>();
+    WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
+
+    return provider!;
+}
+```
+
+#### Tests
+
+A typical test to get a list of Weather Locations:
+
+```csharp
+[Fact]
+public async void TestWeatherLocationListCQSDataBroker()
+{
+    // Build our DI container
+    var provider = GetServiceProvider();
+    //Get the Data Broker
+    var broker = provider.GetService<ICQSDataBroker>()!;
+
+    // Get the control record count from the Test Data Provider
+    var testRecordCount = _weatherTestDataProvider.WeatherLocations.Count();
+    int pageSize = 10;
+    // Get the expected recordset count.
+    // It should be either the page size or the total record count if that's smaller
+    var testCount = testRecordCount > pageSize ? pageSize : testRecordCount ;
+
+    // Create a list request
+    var listRequest = new ListProviderRequest<DboWeatherLocation>(0, pageSize);
+
+    // Create a ListQuery and execute the query on the Data Broker against the DboWeatherLocation recordset
+    var query = new ListQuery<DboWeatherLocation>(listRequest);
+    var result = await broker.ExecuteAsync<DboWeatherLocation>(query);
+
+    // Check we have success
+    Assert.True(result.Success);
+    // Check the recordset count
+    Assert.Equal(testCount, result.Items.Count());
+    // Check the total count os correct against the test provider
+    Assert.True(result.TotalItemCount == testRecordCount);
+}
+```
+
+And a Add command Test:
+
+```csharp
+[Fact]
+public async void TestAddCQSDataBroker()
+{
+    var provider = GetServiceProvider();
+    var broker = provider.GetService<ICQSDataBroker>()!;
+
+    var newRecord = _weatherTestDataProvider.GetForecast();
+    var id = newRecord!.Uid;
+
+    var command = new AddRecordCommand<DboWeatherForecast>(newRecord);
+    var result = await broker.ExecuteAsync(command);
+
+    var query = new RecordQuery<DboWeatherForecast>(id);
+    var checkResult = await broker.ExecuteAsync(query);
+
+    Assert.True(result.Success);
+    Assert.Equal(newRecord, checkResult.Record);
+}
+```
+## Custom Requests
+
+### Filtered Lists
+
+This is the most common custom request.  It can be dealt with as a customized `BaseListQuery`.
+
+Our example custom query filters the WeatherForecast based on the Location.
+
+#### Query
+
+1. Inherits from `ListQueryBase` fixing `TRecord` as `DvoWeatherForecast`.
+2. Defines a `WeatherLocationId` property.
+3. Defines a static creator method.
 
 ```csharp
 public record WeatherForecastListQuery
     : ListQueryBase<DvoWeatherForecast>
 {
-    public Guid? WeatherLocationId { get; init; }
+    public Guid WeatherLocationId { get; init; }
 
-    public WeatherForecastListQuery()
-    : base()
-        => WeatherLocationId = Guid.Empty;
+    private WeatherForecastListQuery() { }
 
-
-    public WeatherForecastListQuery(Guid? weatherLocationId, ListProviderRequest<DvoWeatherForecast> request)
-        : base(request)
-    {
-        if (weatherLocationId is not null && weatherLocationId != Guid.Empty)
-            WeatherLocationId = weatherLocationId;
-    }
-
-    public WeatherForecastListQuery(ListProviderRequest<DvoWeatherForecast> request)
-        :base(request)
-        => WeatherLocationId = Guid.Empty;
+    public static WeatherForecastListQuery GetQuery(Guid weatherLocationId, ListProviderRequest<DvoWeatherForecast> request)
+        => new WeatherForecastListQuery
+        {
+            StartIndex = request.StartIndex,
+            PageSize = request.PageSize,
+            SortExpressionString = request.SortExpressionString,
+            FilterExpressionString = request.FilterExpressionString,
+            WeatherLocationId = weatherLocationId,
+        };
 }
 ```
 
-And the handler built on the same pattern as generic handler:
+#### Handler
+
+This is built on the same pattern as generic handler with `Where` added to the query.
 
 ```csharp
 public class WeatherForecastListQueryHandler<TDbContext>
@@ -694,7 +746,7 @@ public class WeatherForecastListQueryHandler<TDbContext>
 
         IQueryable<DvoWeatherForecast> query = dbContext.Set<DvoWeatherForecast>();
 
-        if (listQuery.WeatherLocationId is not null && listQuery.WeatherLocationId != Guid.Empty)
+        if (listQuery.WeatherLocationId != Guid.Empty)
             query = query
                 .Where(item => item.WeatherLocationId == listQuery.WeatherLocationId)
                 .AsQueryable();
@@ -722,7 +774,7 @@ public class WeatherForecastListQueryHandler<TDbContext>
 
         IQueryable<DvoWeatherForecast> query = dbContext.Set<DvoWeatherForecast>();
 
-        if (listQuery.WeatherLocationId is not null && listQuery.WeatherLocationId != Guid.Empty)
+        if (listQuery.WeatherLocationId != Guid.Empty)
             query = query
                 .Where(item => item.WeatherLocationId == listQuery.WeatherLocationId)
                 .AsQueryable();
@@ -737,20 +789,17 @@ public class WeatherForecastListQueryHandler<TDbContext>
 }
 ```
 
-We can now take advantage of DI and define a DI service for our handler:
+The handler can be defined in DI:
 
 ```csharp
 services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
 ```
-And get this service like this in our broker:
 
-```csharp
-var handler = ServiceProviderInstance.GetService<IListQueryHandler<TRecord>>();
-```
+#### Broker
 
-We can only define one `IListQueryHandler` per data class using thia methodology, but we can code the query and handler to handle different types of query.
+We can add method into the standard broker to get the `IListQueryHandler<TRecord>`.  We can only define one `IListQueryHandler` per data class using this methodology, but we can code the query and handler to handle different types of query.
 
-We define this in `ICQSDataBroker`: 
+The `ICQSDataBroker` definition: 
 
 ```csharp
 public interface ICQSDataBroker
@@ -759,157 +808,199 @@ public interface ICQSDataBroker
 }
 ```
 
-And implement it in `CQSDataBroker`.  
+#### Testing
+
+Update the `CQSBrokerTests` Adding the custom Handler:
+
 
 ```csharp
-public class CQSDataBroker<TDbContext>
-    :ICQSDataBroker
-    where TDbContext : DbContext
-{
-    private readonly IDbContextFactory<TDbContext> _factory;
-    private readonly IServiceProvider _serviceProvider;
-
-    public CQSDataBroker(IDbContextFactory<TDbContext> factory, IServiceProvider serviceProvider)
-    { 
-        _factory = factory;
-        _serviceProvider = serviceProvider;
-    }
-
-    public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(IListQuery<TRecord> query) where TRecord : class, new()
+    private ServiceProvider GetServiceProvider()
     {
-        var queryType = query.GetType();
-        var handler = _serviceProvider.GetService<IListQueryHandler<TRecord>>();
-        if (handler == null)
-            throw new NullReferenceException("No Handler service registed for the List Query");
+        // Creates a Service Collection
+        var services = new ServiceCollection();
+        // Adds the application services to the collection
+        Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
+        services.AddWeatherAppServerDataServices<InMemoryWeatherDbContext>(dbOptions);
+        services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
+        services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
+        // Creates a Service Provider from the Services collection
+        // This is our DI container
+        var provider = services.BuildServiceProvider();
 
-        var result = await handler.ExecuteAsync(query);
-        return result;
-    }
-    //.... other ExecuteAsyncs
-}
-```
-
-## Testing
-
-I'm using testing in this article to demonstrate the pipeline in action.
-
-Here's the setup for the Broker tests.
-
-```csharp
-public CQSBrokerTests()
-    // Creates an instance of the Test Data provider
-    => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
-
-private ServiceProvider GetServiceProvider()
-{
-    // Creates a Service Collection
-    var services = new ServiceCollection();
-
-    // Adds the application services to the collection
-    Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
-    services.AddDbContextFactory<TDbContext>(options);
-    services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
-    services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
-
-    // Creates a Service Provider from the Services collection
-    // This is our DI container
-    var provider = services.BuildServiceProvider();
-
-    // Adds the test data to the in memory database
-    var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>();
-    if (factory is not null)
+        // Adds the test data to the in memory database
+        var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>();
         WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
 
-    return provider!;
+        return provider!;
+    }
+```
+
+And add a test:
+
+```csharp
+    [Fact]
+    public async void TestCustomDvoWeatherForecastListCQSDataBroker()
+    {
+        var provider = GetServiceProvider();
+        var broker = provider.GetService<ICQSDataBroker>()!;
+        var locationId = _weatherTestDataProvider.WeatherLocations.First().Uid;
+
+        var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherLocationId == locationId).Count();
+        int pageSize = 10;
+        var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
+
+        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
+
+        var query = WeatherForecastListQuery.GetQuery(locationId, listRequest);
+        var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
+
+        Assert.True(result.Success);
+        Assert.Equal(testCount, result.Items.Count());
+        Assert.True(result.TotalItemCount == testRecordCount);
+    }
+```
+
+### Identity Provider
+
+This demostrates a full custom implementation.  It gets a result that contains a `ClaimsIdentity` (part of the Authentication system) from a database identity table.
+
+For reference the database record is:
+
+```csharp
+public record DboIdentity
+{
+    [Key] public Guid Id { get; init; } = Guid.Empty;
+    public string Name { get; init; } = String.Empty;
+    public string Role { get; init; } = String.Empty;
 }
 ```
 
-Each test sets up it's own DI service container, and adds the application services to it.
-
-Here's a typical test to get a list of Weather Locations:
+The result:
 
 ```csharp
-[Fact]
-public async void TestWeatherLocationListCQSDataBroker()
+public class IdentityRequestResult
 {
-    // Build our DI container
-    var provider = GetServiceProvider();
-    //Get the Data Broker
-    var broker = provider.GetService<ICQSDataBroker>()!;
+    public ClaimsIdentity? Identity { get; init; } = null;
+    public bool Success { get; init; } = false;
+    public string Message { get; init; } = string.Empty;
 
-    // Get the control record count from the Test Data Provider
-    var testRecordCount = _weatherTestDataProvider.WeatherLocations.Count();
-    int pageSize = 10;
-    // Get the expected recordset count.
-    // It should be either the page size or the total record count if that's smaller
-    var testCount = testRecordCount > pageSize ? pageSize : testRecordCount ;
+    public static IdentityRequestResult Failure(string message)
+        => new IdentityRequestResult {Message = message };
 
-    // Create a list request
-    var listRequest = new ListProviderRequest<DboWeatherLocation>(0, pageSize);
-
-    // Create a ListQuery and execute the query on the Data Broker against the DboWeatherLocation recordset
-    var query = new ListQuery<DboWeatherLocation>(listRequest);
-    var result = await broker.ExecuteAsync<DboWeatherLocation>(query);
-
-    // Check we have success
-    Assert.True(result.Success);
-    // Check the recordset count
-    Assert.Equal(testCount, result.Items.Count());
-    // Check the total count os correct against the test provider
-    Assert.True(result.TotalItemCount == testRecordCount);
+    public static IdentityRequestResult Successful(ClaimsIdentity identity, string? message = null)
+        => new IdentityRequestResult {Identity = identity, Success=true, Message = message ?? string.Empty };
 }
 ```
 
-Here's a very similar test using the custom WeatherForecast query to filter the results:
+The query request:
 
 ```csharp
-[Fact]
-public async void TestFilteredDvoWeatherForecastListCQSDataBroker()
+public record IdentityQuery
+    : ICQSRequest<ValueTask<IdentityRequestResult>>
 {
-    var provider = GetServiceProvider();
-    var broker = provider.GetService<ICQSDataBroker>()!;
-    var locationId = _weatherTestDataProvider.WeatherLocations.First().Uid;
-    var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherLocationId == locationId).Count();
-    int pageSize = 10;
-    var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
+    public Guid TransactionId { get; } = Guid.NewGuid();
+    public Guid IdentityId { get; init; } = Guid.Empty;
 
-    var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
-
-    var query = new WeatherForecastListQuery(locationId,listRequest);
-    var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
-
-    Assert.True(result.Success);
-    Assert.Equal(testCount, result.Items.Count());
-    Assert.True(result.TotalItemCount == testRecordCount);
+    public static IdentityQuery Query(Guid Uid)
+        => new IdentityQuery { IdentityId = Uid };
 }
 ```
 
-And finally a Add command Test:
+A handler interface - we may need Server and API versions.
 
 ```csharp
-[Fact]
-public async void TestAddCQSDataBroker()
+public interface IIdentityQueryHandler
+    : ICQSHandler<IdentityQuery, ValueTask<IdentityRequestResult>>
+{}
+```
+
+And the handler:
+
+```csharp
+public class IdentityQueryHandler<TDbContext>
+    : ICQSHandler<IdentityQuery, ValueTask<IdentityRequestResult>>
+        where TDbContext : DbContext
 {
-    var provider = GetServiceProvider();
-    var broker = provider.GetService<ICQSDataBroker>()!;
+    protected IDbContextFactory<TDbContext> factory;
 
-    var newRecord = _weatherTestDataProvider.GetForecast();
-    var id = newRecord!.Uid;
+    public IdentityQueryHandler(IDbContextFactory<TDbContext> factory)
+        => this.factory = factory;
 
-    var command = new AddRecordCommand<DboWeatherForecast>(newRecord);
-    var result = await broker.ExecuteAsync(command);
+    public async ValueTask<IdentityRequestResult> ExecuteAsync(IdentityQuery query)
+    {
+        var dbContext = this.factory.CreateDbContext();
+        IQueryable<DboIdentity> queryable = dbContext.Set<DboIdentity>();
+        if (queryable is not null)
+        {
+            var record = await queryable.SingleOrDefaultAsync(item => item.Id == query.IdentityId);
+            if (record is not null)
+            {
+                var identity = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Sid, record.Id.ToString()),
+                    new Claim(ClaimTypes.Name, record.Name),
+                    new Claim(ClaimTypes.Role, record.Role)
+                });
+                return IdentityRequestResult.Successful(identity);
+            }
+            return IdentityRequestResult.Failure("No Identity exists.");
+        }
+        return IdentityRequestResult.Failure("No Identity Records Found.");
+    }
+}
+```
 
-    var query = new RecordQuery<DboWeatherForecast>(id);
-    var checkResult = await broker.ExecuteAsync(query);
+And the demo test:
 
-    Assert.True(result.Success);
-    Assert.Equal(newRecord, checkResult.Record);
+```csharp
+public class CQSCustomTests
+{
+    private WeatherTestDataProvider _weatherTestDataProvider;
+
+    public CQSCustomTests()
+        // Creates an instance of the Test Data provider
+        => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
+
+    private ServiceProvider GetServiceProvider()
+    {
+        // Creates a Service Collection
+        var services = new ServiceCollection();
+        // Adds the application services to the collection
+        Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
+        services.AddWeatherAppServerDataServices<InMemoryWeatherDbContext>(dbOptions);
+        services.AddScoped<IIdentityQueryHandler, IdentityQueryHandler<InMemoryWeatherDbContext>>();
+        // Creates a Service Provider from the Services collection
+        // This is our DI container
+        var provider = services.BuildServiceProvider();
+
+        // Adds the test data to the in memory database
+        var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>();
+        WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
+
+        return provider!;
+    }
+
+    [Fact]
+    public async void TestIdentityCQSDataBroker()
+    {
+        var provider = GetServiceProvider();
+        var broker = provider.GetService<IIdentityQueryHandler>()!;
+
+        var testRecord = _weatherTestDataProvider.Identities.Skip(1).First();
+
+        var query = IdentityQuery.GetQuery(testRecord.Id);
+        var result = await broker.ExecuteAsync(query);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Identity);
+        Assert.Equal(testRecord.Name, result.Identity.Name);
+    }
 }
 ```
 
 ## Summary
 
-Hopefully I demonstrated a different, more succinct approach to implementing the CQS pattern.  I'm now the converted.  It's replaced my old repository pattern code.
+Hopefully I demonstrated a different, more succinct approach to implementing the CQS pattern.  I'm now the converted: this has replaced my old repository pattern code.
 
 I've intentionally not implemented transaction logging or centralised exception handling.
 
@@ -933,6 +1024,7 @@ public class InMemoryWeatherDbContext
     public DbSet<DboWeatherLocation> DboWeatherLocation { get; set; } = default!;
     public DbSet<FkWeatherSummary> FkWeatherSummary { get; set; } = default!;
     public DbSet<FkWeatherLocation> FkWeatherLocation { get; set; } = default!;
+    public DbSet<DboIdentity> DboIdentity { get; set; } = default!;
 
     public InMemoryWeatherDbContext(DbContextOptions<InMemoryWeatherDbContext> options) : base(options) { }
 
@@ -941,6 +1033,7 @@ public class InMemoryWeatherDbContext
         modelBuilder.Entity<DboWeatherForecast>().ToTable("WeatherForecast");
         modelBuilder.Entity<DboWeatherSummary>().ToTable("WeatherSummary");
         modelBuilder.Entity<DboWeatherLocation>().ToTable("WeatherLocation");
+        modelBuilder.Entity<DboIdentity>().ToTable("Identity");
 
         modelBuilder.Entity<DvoWeatherForecast>()
             .ToInMemoryQuery(()

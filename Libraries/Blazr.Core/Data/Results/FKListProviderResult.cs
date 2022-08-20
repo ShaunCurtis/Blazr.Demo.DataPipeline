@@ -14,12 +14,11 @@ public record FKListProviderResult
 
     public string? Message { get; init; }
 
-    public FKListProviderResult() { }
+    protected FKListProviderResult() { }
 
-    public FKListProviderResult(IEnumerable<IFkListItem> items, bool success = true, string? message = null)
-    {
-        Items = items;
-        Success = success;
-        Message = message;
-    }
+    public static FKListProviderResult Failure(string message)
+        => new FKListProviderResult { Message = message };
+
+    public static FKListProviderResult Successful(IEnumerable<IFkListItem> items, string? message = null)
+        => new FKListProviderResult { Items = items, Success = true, Message = message ?? "The query completed successfully" };
 }
