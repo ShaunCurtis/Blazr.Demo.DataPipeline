@@ -2,11 +2,11 @@
 
 The CQS implementations I've seen have always looked incredibly verbose: the number of classes scared me.
 
-I recently had cause to revisit CQS on an application re-write and decided to work on creating a more succinct implementation.  This article is about what I've managed to achieve.
+I recently had cause to revisit CQS on an application re-write and decided to work on creating a more succinct implementation.  This article describes what I've achieved.
 
 ## Test Data
 
-Appendix provides a summary of the data classes and test data provider.  There's a full description in the documents section of the repository.
+The Appendix provides a summary of the data classes and test data provider.  There's a full description in the documents section of the repository.
 
 ## Repository
 
@@ -23,7 +23,7 @@ CQS - not to be confused with CQRS - is fundimentally a programming style.  Ever
 
 A *Command* returns either status information or nothing.  CQS stipulates it **NEVER** returns a data set.
 
-A *Query* returns a data set.  CQS defines it **NEVER** makes makes changes to the state of the data.  Ther are no **NO SIDE EFFECTS** to the owning object.
+A *Query* returns a data set.  CQS defines it **NEVER** makes changes to the state of the data.  There are **NO SIDE EFFECTS**.
 
 It's a good pattern to apply universally across your code: I do.
 
@@ -37,7 +37,7 @@ In essence:
 
 - A *Handler* object executes the necessary code and returns the defined *Result* using data provided by the *Request*.  
 
-Conceptually it's very simple, and relatively easy to implement.  The problem is most implementations are very verbose.  A request and a handler for every single database action. Lots of classes repeating the same old code.  Here's an example:
+Conceptually it's very simple, and relatively easy to implement.  The problem which I've already stated is it's very verbose.  A request and a handler for every single database action. Lots of classes repeating the same old code.  Here's an example:
 
 ![Verbose CQS](./documents/images/verbose-cqs.png)
 
@@ -69,7 +69,7 @@ public interface ICQSRequest<out TResult>
 public interface ICQSHandler<in TRequest, out TResult>
     where TRequest : ICQSRequest<TResult>
 {
-    TResult ExecuteAsync();
+    TResult ExecuteAsync(TRequest request);
 }
 ```
 
@@ -212,7 +212,7 @@ public abstract class RecordCommandBase<TRecord>
 }
 ```
 
-We can now define our Add/Delete/Update specific commands.
+We can now define the Add/Delete/Update specific commands.
 
 ```csharp
 public class AddRecordCommand<TRecord>
@@ -262,15 +262,11 @@ public class AddRecordCommandHandler<TRecord, TDbContext>
     where TRecord : class, new()
 {
     protected IDbContextFactory<TDbContext> factory;
-    protected readonly AddRecordCommand<TRecord> command;
 
-    public AddRecordCommandHandler(IDbContextFactory<TDbContext> factory, AddRecordCommand<TRecord> command)
-    {
-        this.command = command;
-        this.factory = factory;
-    }
+    public AddRecordCommandHandler(IDbContextFactory<TDbContext> factory)
+        =>  this.factory = factory;
 
-    public async ValueTask<CommandResult> ExecuteAsync()
+    public async ValueTask<CommandResult> ExecuteAsync(AddRecordCommand<TRecord> command)
     {
         using var dbContext = factory.CreateDbContext();
         dbContext.Add<TRecord>(command.Record);
@@ -283,10 +279,10 @@ public class AddRecordCommandHandler<TRecord, TDbContext>
 
 ## Queries
 
-Moving on to queries which aren't quite so uniform.
+Queries aren't quite so uniform.
 
 1. There are various types of `TResult`.
-2. They have specific *Where* and *OrderBy* requirements.
+2. They have specific operations such as *Where* and *OrderBy*.
 
 To handle these requirements we define three Query requests:
 
@@ -363,7 +359,7 @@ public record ListQuery<TRecord>
 }
 ```
 
-We use the interface/abstract base class pattern because we need to implement custom List queries.  If these inherit from `ListQuery`, we run into issues with factories and pattern methods.  Using a base class to implement the bolierplate code solves this problem.
+We separate the code into the interface/abstract base class pattern so can implement custom List queries.  If these inherit from `ListQuery`, we run into issues with factories and pattern matching methods.  Using a base class to implement the boilerplate code solves this problem.
 
 ### FKListQuery
 
@@ -397,18 +393,14 @@ public class RecordQueryHandler<TRecord, TDbContext>
         where TRecord : class, new()
         where TDbContext : DbContext
 {
-    private readonly RecordQuery<TRecord> _query;
     private IDbContextFactory<TDbContext> _factory;
     private bool _success = true;
     private string _message = string.Empty;
 
-    public RecordQueryHandler(IDbContextFactory<TDbContext> factory, RecordQuery<TRecord> query)
-    {
-        _factory = factory;
-        _query = query;
-    }
+    public RecordQueryHandler(IDbContextFactory<TDbContext> factory)
+        =>  _factory = factory;
 
-    public async ValueTask<RecordProviderResult<TRecord>> ExecuteAsync()
+    public async ValueTask<RecordProviderResult<TRecord>> ExecuteAsync(RecordQuery<TRecord> query)
     {
         var dbContext = _factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
@@ -417,19 +409,19 @@ public class RecordQueryHandler<TRecord, TDbContext>
 
         // first check if the record implements IRecord.  If so we can do a cast and then do the query via the Uid property directly 
         if ((new TRecord()) is IRecord)
-            record = await dbContext.Set<TRecord>().SingleOrDefaultAsync(item => ((IRecord)item).Uid == _query.GuidId);
+            record = await dbContext.Set<TRecord>().SingleOrDefaultAsync(item => ((IRecord)item).Uid == query.GuidId);
 
         // Try and use the EF FindAsync implementation
         if (record == null)
         {
-            if (_query.GuidId != Guid.Empty)
-                record = await dbContext.FindAsync<TRecord>(_query.GuidId);
+            if (query.GuidId != Guid.Empty)
+                record = await dbContext.FindAsync<TRecord>(query.GuidId);
 
-            if (_query.LongId > 0)
-                record = await dbContext.FindAsync<TRecord>(_query.LongId);
+            if (query.LongId > 0)
+                record = await dbContext.FindAsync<TRecord>(query.LongId);
 
-            if (_query.IntId > 0)
-                record = await dbContext.FindAsync<TRecord>(_query.IntId);
+            if (query.IntId > 0)
+                record = await dbContext.FindAsync<TRecord>(query.IntId);
         }
 
         if (record is null)
@@ -465,26 +457,7 @@ public class ListQueryHandler<TRecord, TDbContext>
     protected IListQuery<TRecord> listQuery = default!;
 
     public ListQueryHandler(IDbContextFactory<TDbContext> factory)
-    {
-        this.factory = factory;
-    }
-
-    public ListQueryHandler(IDbContextFactory<TDbContext> factory, IListQuery<TRecord> query)
-    {
-        this.factory = factory;
-        this.listQuery = query;
-    }
-
-    public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync()
-    {
-        if (this.listQuery is null)
-            return new ListProviderResult<TRecord>(new List<TRecord>(), 0, false, "No Query Defined");
-
-        if (await this.GetItemsAsync())
-            await this.GetCountAsync();
-
-        return new ListProviderResult<TRecord>(this.items, this.count);
-    }
+        => this.factory = factory;
 
     public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync(IListQuery<TRecord> query)
     {
@@ -559,21 +532,20 @@ public class FKListQueryHandler<TRecord, TDbContext>
 {
     protected IEnumerable<TRecord> items = Enumerable.Empty<TRecord>();
     protected IDbContextFactory<TDbContext> factory;
-    protected readonly FKListQuery<TRecord> listQuery;
 
-    public FKListQueryHandler(IDbContextFactory<TDbContext> factory, FKListQuery<TRecord> query)
-    {
-        this.factory = factory;
-        this.listQuery = query;
-    }
+    public FKListQueryHandler(IDbContextFactory<TDbContext> factory)
+        => this.factory = factory;
 
-    public async ValueTask<FKListProviderResult> ExecuteAsync()
+    public async ValueTask<FKListProviderResult> ExecuteAsync(FKListQuery<TRecord> listQuery)
     {
         var dbContext = this.factory.CreateDbContext();
+        dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
         if (listQuery is null)
             return new FKListProviderResult(Enumerable.Empty<IFkListItem>(), false, "No Query defined");
 
         IEnumerable<TRecord> dbSet = await dbContext.Set<TRecord>().ToListAsync();
+
         return new FKListProviderResult(dbSet);
     }
 }
@@ -583,7 +555,7 @@ public class FKListQueryHandler<TRecord, TDbContext>
 
 We can now define a factory interface and class to abstract the execution of *Requests* against their respective *Handlers*.  I call these *Brokers*.
 
-The intention is to code the broker so calls to `ExecuteAsync` with a request object will execute the request against it's defined handler and provide the expected result.
+The intention is to code the broker with a single method `ExecuteAsync(Request)`.  Internally the broker matches the request to it's handler, executes the request and provides the expected result.
 
 ```csharp
 var TResult = await DataBrokerInstance.ExecuteAsync<TRecord>(TRequest);
@@ -622,8 +594,7 @@ public class CQSDataBroker<TDbContext>
     public async ValueTask<CommandResult> ExecuteAsync<TRecord>(AddRecordCommand<TRecord> command) where TRecord : class, new()
     {
         var handler = new AddRecordCommandHandler<TRecord, TDbContext>(_factory, command);
-        var result = await handler.ExecuteAsync();
-        return result;
+        return await handler.ExecuteAsync();
     }
 
     //.... Update and Delete ExecuteAsyncs
@@ -631,22 +602,19 @@ public class CQSDataBroker<TDbContext>
     public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(ListQuery<TRecord> query) where TRecord : class, new()
     {
         var handler = new ListQueryHandler<TRecord, TDbContext>(_factory, query);
-        var result = await handler.ExecuteAsync();
-        return result;
+        return await handler.ExecuteAsync();
     }
 
     public async ValueTask<RecordProviderResult<TRecord>> ExecuteAsync<TRecord>(RecordQuery<TRecord> query) where TRecord : class, new()
     {
         var handler = new RecordQueryHandler<TRecord, TDbContext>(_factory, query);
-        var result = await handler.ExecuteAsync();
-        return result;
+        return await handler.ExecuteAsync();
     }
 
     public async ValueTask<FKListProviderResult> ExecuteAsync<TRecord>(FKListQuery<TRecord> query) where TRecord : class, IFkListItem, new()
     {
         var handler = new FKListQueryHandler<TRecord, TDbContext>(_factory, query);
-        var result = await handler.ExecuteAsync();
-        return result;
+        return await handler.ExecuteAsync();
     }
 
     public ValueTask<object> ExecuteAsync<TRecord>(object query)
@@ -769,10 +737,10 @@ public class WeatherForecastListQueryHandler<TDbContext>
 }
 ```
 
-We can now take advantage of DI and define a transient DI service for our handler:
+We can now take advantage of DI and define a DI service for our handler:
 
 ```csharp
-services.AddTransient<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
+services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
 ```
 And get this service like this in our broker:
 
@@ -823,13 +791,13 @@ public class CQSDataBroker<TDbContext>
 
 ## Testing
 
-I'm using testing to demostrate the pipeline.
+I'm using testing in this article to demonstrate the pipeline in action.
 
 Here's the setup for the Broker tests.
 
 ```csharp
 public CQSBrokerTests()
-    // Creates an instanc of the Test Data provider
+    // Creates an instance of the Test Data provider
     => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
 
 private ServiceProvider GetServiceProvider()
@@ -841,7 +809,7 @@ private ServiceProvider GetServiceProvider()
     Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
     services.AddDbContextFactory<TDbContext>(options);
     services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
-    services.AddTransient<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
+    services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
 
     // Creates a Service Provider from the Services collection
     // This is our DI container
@@ -892,7 +860,7 @@ public async void TestWeatherLocationListCQSDataBroker()
 }
 ```
 
-Here's a very simplar test, but using the custom WeatherForecast query to filter the results:
+Here's a very similar test using the custom WeatherForecast query to filter the results:
 
 ```csharp
 [Fact]
@@ -942,6 +910,8 @@ public async void TestAddCQSDataBroker()
 ## Summary
 
 Hopefully I demonstrated a different, more succinct approach to implementing the CQS pattern.  I'm now the converted.  It's replaced my old repository pattern code.
+
+I've intentionally not implemented transaction logging or centralised exception handling.
 
 ## Appendix
 
@@ -1013,4 +983,6 @@ public class InMemoryWeatherDbContext
     }
 }
 ```
+
+There's a readme in the repository that provides a full description of the test data setup.
 

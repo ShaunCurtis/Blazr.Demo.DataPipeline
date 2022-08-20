@@ -17,9 +17,7 @@ public class WeatherForecastListQueryHandler<TDbContext>
     protected WeatherForecastListQuery listQuery = default!;
 
     public WeatherForecastListQueryHandler(IDbContextFactory<TDbContext> factory)
-    {
-        this.factory = factory;
-    }
+        => this.factory = factory;
 
     public async ValueTask<ListProviderResult<DvoWeatherForecast>> ExecuteAsync(IListQuery<DvoWeatherForecast> query)
     {

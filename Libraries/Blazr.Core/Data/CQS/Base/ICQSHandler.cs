@@ -9,5 +9,5 @@ namespace Blazr.Core;
 public interface ICQSHandler<in TRequest, out TResult>
     where TRequest : ICQSRequest<TResult>
 {
-    TResult ExecuteAsync();
+    TResult ExecuteAsync(TRequest request);
 }

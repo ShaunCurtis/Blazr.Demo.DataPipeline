@@ -12,15 +12,11 @@ public class FKListQueryHandler<TRecord, TDbContext>
 {
     protected IEnumerable<TRecord> items = Enumerable.Empty<TRecord>();
     protected IDbContextFactory<TDbContext> factory;
-    protected readonly FKListQuery<TRecord> listQuery;
 
-    public FKListQueryHandler(IDbContextFactory<TDbContext> factory, FKListQuery<TRecord> query)
-    {
-        this.factory = factory;
-        this.listQuery = query;
-    }
+    public FKListQueryHandler(IDbContextFactory<TDbContext> factory)
+        => this.factory = factory;
 
-    public async ValueTask<FKListProviderResult> ExecuteAsync()
+    public async ValueTask<FKListProviderResult> ExecuteAsync(FKListQuery<TRecord> listQuery)
     {
         var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
