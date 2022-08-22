@@ -39,7 +39,7 @@ Conceptually it's very simple, and relatively easy to implement.  The problem is
 
 The solution consists of a set of libraries organised on Clean Design principles.  It's designed to work in any DotNetCore environment.  `Blazr.Core` and `Blazr.Data` are the two base libraries that can be used for any implementation.  `Blazr.Demo.Core` and `Blazr.Demo.Data` are the two application specific libraries.
 
-The front end application is an XUnit test project to demonstrate as much as to test.
+The front end application is an XUnit test project to both demonstrate and test the code.
 
 I use it in Blazor projects. 
 
