@@ -1,5 +1,3 @@
-
-using Blazr.Data;
 /// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
@@ -30,7 +28,7 @@ public class CQSBrokerTests
         var provider = services.BuildServiceProvider();
 
         // Adds the test data to the in memory database
-        var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>();
+        var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>()!;
         WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
 
         return provider!;

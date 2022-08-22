@@ -10,9 +10,7 @@ The Appendix provides a summary of the data classes and test data provider.  The
 
 ## Repository
 
-The data repository associated with this is here: [Blazr.Demo.DataPipeline](https://github.com/ShaunCurtis/Blazr.Demo.DataPipeline).  There's some extra documents in the repository on design and detail on the data classes, test data provider and database context. 
-
-The implementation is used in my demo Blazor application which is here: [Blazr.Demo](https://github.com/ShaunCurtis/Blazr.Demo).
+The data repository associated with this article is here: [Blazr.Demo.DataPipeline](https://github.com/ShaunCurtis/Blazr.Demo.DataPipeline).  There's some extra documents in the repository on design and detail on the data classes, test data provider and database context. 
 
 ## Introduction
 
@@ -21,13 +19,11 @@ CQS - not to be confused with CQRS - is fundimentally a programming style.  Ever
 1. A *Command* - a request to make a data change.
 2. A *Query* - a request to get some data.
 
-A *Command* returns either status information or nothing.  CQS stipulates it **NEVER** returns a data set.
+A *Command* returns either status information or nothing.  Commands **NEVER** returns data.
 
-A *Query* returns a data set.  CQS defines it **NEVER** makes changes to the state of the data.  There are **NO SIDE EFFECTS**.
+A *Query* returns a data set.  Queries **NEVER** makes changes to the state of the data.  There are **NO SIDE EFFECTS** to making a query.
 
-It's a good pattern to apply universally across your code: I do.
-
-Smaller projects tend to avoid the CQS Data pipeline framework: too complicated because the demo implementations contain a lot of classes.
+It's a excellent pattern to apply universally across your code.
 
 Each action has a *Command/Query* class that defines the action and a *Handler* class to execute the defined action.  Normally a one-to-one relationship: a unique handler for every request.
 
@@ -37,11 +33,15 @@ In essence:
 
 - A *Handler* object executes the necessary code and returns the defined *Result* using data provided by the *Request*.  
 
-Conceptually it's very simple, and relatively easy to implement.  The problem which I've already stated is it's very verbose.  A request and a handler for every single database action. Lots of classes repeating the same old code.
+Conceptually it's very simple, and relatively easy to implement.  The problem is each database action requires a request and a handler object. Lots of classes defining and repeating the same old code.
 
-The solution consists of a set of libraries organised on Clean Design principles.  It's designed to work in any DotNetCore environment.  `Blazr.Core` and `Blazr.Data` are the two base libraries that can be used for any implementation.  `Blazr.Demo.Core` and `Blazr.Demo.Data` are the two application specific backend libraries.
+## Solution Layout and Design
 
-The front end application is a XUnit test project that there to demonstrate as much as to test.  I use it in Blazor projects. 
+The solution consists of a set of libraries organised on Clean Design principles.  It's designed to work in any DotNetCore environment.  `Blazr.Core` and `Blazr.Data` are the two base libraries that can be used for any implementation.  `Blazr.Demo.Core` and `Blazr.Demo.Data` are the two application specific libraries.
+
+The front end application is an XUnit test project to demonstrate as much as to test.
+
+I use it in Blazor projects. 
 
 ## Interfaces and Base Classes
 
@@ -63,7 +63,7 @@ public interface ICQSRequest<out TResult>
 
 1. The handler gets a `TRequest` which implements the `ICQSRequest` interface.
 2. The handler outputs a `TResult` as defined in the `ICQSRequest` interface.
-3. It has a single `ExecuteAsync` method that returns `TResult`.
+3. It has a single `ExecuteAsync` method that takes a `TRequest` and returns `TResult`.
 
 ```csharp
 public interface ICQSHandler<in TRequest, out TResult>
@@ -75,15 +75,14 @@ public interface ICQSHandler<in TRequest, out TResult>
 
 To build a more succinct implementation:
 
- - Accept The 80/20 rule.  Not every request can be fulfilled with our our standard implementation, but 80% is a lot of effort and classes to save on.
- - Need a methodology for the 20%.
- - Need a "compliant" generics based ORM to interface with our data store.  This implementation uses *Entity Framework* which provides that. 
- - Accept there will be some quite complicated generics implemented in the base classes to abstract functionality into boilerplate code.
-
+ - We must Accept the 80/20 rule.  Not every request can be fulfilled with our our standard implementation, but 80% is a lot of effort and classes to save on.
+ - We need a methodology for the 20%.
+ - We need a "compliant" generics based ORM to interface with our data store.  This implementation uses *Entity Framework* which provides that. 
+ - Code some quite complicated generics in the base classes to abstract functionality into boilerplate code.
 
 ## Results
 
-The requests need a set of standard results to return: `TResult` of the request.  They are defined as `record` with static constructors and contains status information and, if a query, a data set.  They must be serializable to use in APIs.  Each is shown below:
+The solution defines a set of standard results to return: `TResult` of the request.  They are defined as `record` with static constructors and contains status information and, if a query, data.  They must be serializable to use in APIs.  Each is shown below:
 
 ```csharp
 public record ListProviderResult<TRecord>
@@ -511,13 +510,13 @@ we'll see both used in testing.
 
 ### The Generic Factory Broker
 
-The broker is code with a single method `ExecuteAsync(Request)`, with an implementation for each request which uses the correct handler, executes the request and provides the expected result.
+The broker uses a single method `ExecuteAsync(Request)`, with implementations for each request that maps the correct handler, executes the request and provides the expected result.
 
 ```csharp
 var TResult = await DataBrokerInstance.ExecuteAsync<TRecord>(TRequest);
 ```
 
-First the interface used to define the service in DI:
+The interface used to define the service in DI:
 
 ```csharp
 public interface ICQSDataBroker
@@ -658,7 +657,6 @@ public async void TestAddCQSDataBroker()
 {
     var provider = GetServiceProvider();
     var broker = provider.GetService<ICQSDataBroker>()!;
-
     var newRecord = _weatherTestDataProvider.GetForecast();
     var id = newRecord!.Uid;
 
@@ -676,7 +674,9 @@ public async void TestAddCQSDataBroker()
 
 ### Filtered Lists
 
-This is the most common custom request.  It can be dealt with as a customized `BaseListQuery`.
+This is probably the most common custom request.  The standard `ListQuery` uses Dynamic Linq, so you can build the query as a string to pass in the query.  However, Dynamic Linq is not efficient, so I prefer to define custom queries wherever I use them a lot.
+
+All such queries can use a customized `BaseListQuery`.
 
 Our example custom query filters the WeatherForecast based on the Location.
 
@@ -708,7 +708,7 @@ public record WeatherForecastListQuery
 
 #### Handler
 
-This is built on the same pattern as generic handler with `Where` added to the query.
+This is built on the same pattern as the generic handler.
 
 ```csharp
 public class WeatherForecastListQueryHandler<TDbContext>
@@ -797,7 +797,7 @@ services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQue
 
 #### Broker
 
-We can add method into the standard broker to get the `IListQueryHandler<TRecord>`.  We can only define one `IListQueryHandler` per data class using this methodology, but we can code the query and handler to handle different types of query.
+We can add a method into the standard broker to handle `IListQueryHandler<TRecord>`.  Note we can only define one `IListQueryHandler` per data class using this methodology.
 
 The `ICQSDataBroker` definition: 
 
@@ -808,10 +808,23 @@ public interface ICQSDataBroker
 }
 ```
 
+And the implementation in `CQSDataBroker`:
+
+```csharp
+public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(IListQuery<TRecord> query) where TRecord : class, new()
+{
+    var queryType = query.GetType();
+    var handler = _serviceProvider.GetService<IListQueryHandler<TRecord>>();
+    if (handler == null)
+        throw new NullReferenceException("No Handler service registed for the List Query");
+
+    return await handler.ExecuteAsync(query);
+}
+```
+
 #### Testing
 
-Update the `CQSBrokerTests` Adding the custom Handler:
-
+Update `CQSBrokerTests` adding the custom Handler:
 
 ```csharp
     private ServiceProvider GetServiceProvider()
@@ -906,7 +919,7 @@ public record IdentityQuery
 }
 ```
 
-A handler interface - we may need Server and API versions.
+A handler interface: we may need Server and API versions.
 
 ```csharp
 public interface IIdentityQueryHandler
@@ -1000,7 +1013,7 @@ public class CQSCustomTests
 
 ## Summary
 
-Hopefully I demonstrated a different, more succinct approach to implementing the CQS pattern.  I'm now the converted: this has replaced my old repository pattern code.
+Hopefully I demonstrated a different, more succinct approach to implementing the CQS pattern.  I'm now a convert.
 
 I've intentionally not implemented transaction logging or centralised exception handling.
 
