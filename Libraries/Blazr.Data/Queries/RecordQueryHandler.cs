@@ -17,7 +17,7 @@ public class RecordQueryHandler<TRecord, TDbContext>
 
     public async ValueTask<RecordProviderResult<TRecord>> ExecuteAsync(RecordQuery<TRecord> query)
     {
-        var dbContext = _factory.CreateDbContext();
+        using var dbContext = _factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         TRecord? record = null;
