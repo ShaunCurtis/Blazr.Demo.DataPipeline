@@ -3,8 +3,6 @@
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
-using System.Linq.Dynamic;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Blazr.Data;
 
@@ -42,13 +40,16 @@ public class ListQueryHandler<TRecord, TDbContext>
 
         IQueryable<TRecord> query = dbContext.Set<TRecord>();
 
-        if (listQuery.FilterExpressionString is not null)
+        if (listQuery.FilterExpression is not null)
             query = query
-                .Where(listQuery.FilterExpressionString)
+                .Where(listQuery.FilterExpression)
                 .AsQueryable();
 
-        if (listQuery.SortExpressionString is not null)
-            query = query.OrderBy(listQuery.SortExpressionString);
+        if (listQuery.SortExpression is not null)
+
+            query = listQuery.SortDescending
+                ? query.OrderByDescending(listQuery.SortExpression)
+                : query.OrderBy(listQuery.SortExpression);
 
         if (listQuery.PageSize > 0)
             query = query
@@ -67,17 +68,16 @@ public class ListQueryHandler<TRecord, TDbContext>
         var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-        if (listQuery.FilterExpressionString is null)
-        {
-            IQueryable<TRecord> query = dbContext.Set<TRecord>();
+        IQueryable<TRecord> query = dbContext.Set<TRecord>();
 
-            count = query is IAsyncEnumerable<TRecord>
-                ? await query.CountAsync(listQuery.CancellationToken)
-                : query.Count();
-            return count > 0;
-        }
+        if (listQuery.FilterExpression is not null)
+            query = query
+                .Where(listQuery.FilterExpression)
+                .AsQueryable();
 
-        count = dbContext.Set<TRecord>().Count(listQuery.FilterExpressionString);
+        count = query is IAsyncEnumerable<TRecord>
+            ? await query.CountAsync(listQuery.CancellationToken)
+            : query.Count();
         return count > 0;
     }
 }

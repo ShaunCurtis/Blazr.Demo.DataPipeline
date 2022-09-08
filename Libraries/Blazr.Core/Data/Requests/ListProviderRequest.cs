@@ -13,9 +13,11 @@ public readonly struct ListProviderRequest<TRecord>
 
     public int PageSize { get; }
 
-    public string? SortExpressionString { get; }
+    public bool SortDescending { get; } = false;
 
-    public string? FilterExpressionString { get; }
+    public Expression<Func<TRecord, bool>>? FilterExpression { get; }
+
+    public Expression<Func<TRecord, object>>? SortExpression { get; }
 
     public CancellationToken CancellationToken { get; }
 
@@ -24,24 +26,25 @@ public readonly struct ListProviderRequest<TRecord>
         StartIndex = 0;
         PageSize = 10000;
         CancellationToken = new CancellationToken();
-        SortExpressionString = null;
-        FilterExpressionString = null;
+        SortExpression = null;
+        FilterExpression = null;
     }
     public ListProviderRequest(int startIndex, int pageSize)
     {
         StartIndex = startIndex;
         PageSize = pageSize;
         CancellationToken = new CancellationToken();
-        SortExpressionString = null;
-        FilterExpressionString = null;
+        SortExpression = null;
+        FilterExpression = null;
     }
 
-    public ListProviderRequest(int startIndex, int pageSize, string? sortExpressionString = null, string? filterExpressionString = null)
+    public ListProviderRequest(int startIndex, int pageSize, bool sortDescending = false, Expression<Func<TRecord, object>>? sortExpression = null, Expression<Func<TRecord, bool>>? filterExpression = null)
     {
         StartIndex = startIndex;
         PageSize = pageSize;
         CancellationToken = new CancellationToken();
-        SortExpressionString = sortExpressionString;
-        FilterExpressionString = filterExpressionString;
+        SortDescending = sortDescending;
+        SortExpression = sortExpression;
+        FilterExpression = filterExpression;
     }
 }
