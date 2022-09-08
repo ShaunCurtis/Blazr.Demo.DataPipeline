@@ -3,6 +3,8 @@
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
+using System.Linq.Dynamic;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Blazr.Data;
 
@@ -27,8 +29,8 @@ public class ListQueryHandler<TRecord, TDbContext>
 
         listQuery = query;
 
-        if (await this.GetItemsAsync())
-            await this.GetCountAsync();
+        if (await this.GetCountAsync())
+            await this.GetItemsAsync();
 
         return ListProviderResult<TRecord>.Successful(this.items, this.count);
     }
@@ -53,10 +55,9 @@ public class ListQueryHandler<TRecord, TDbContext>
                 .Skip(listQuery.StartIndex)
                 .Take(listQuery.PageSize);
 
-        if (query is IAsyncEnumerable<TRecord>)
-            this.items = await query.ToListAsync();
-        else
-            this.items = query.ToList();
+        this.items = query is IAsyncEnumerable<TRecord>
+            ? await query.ToListAsync(listQuery.CancellationToken)
+            : query.ToList();
 
         return true;
     }
@@ -66,18 +67,17 @@ public class ListQueryHandler<TRecord, TDbContext>
         var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-        IQueryable<TRecord> query = dbContext.Set<TRecord>();
+        if (listQuery.FilterExpressionString is null)
+        {
+            IQueryable<TRecord> query = dbContext.Set<TRecord>();
 
-        if (listQuery.FilterExpressionString is not null)
-            query = query
-                .Where(listQuery.FilterExpressionString)
-                .AsQueryable();
+            count = query is IAsyncEnumerable<TRecord>
+                ? await query.CountAsync(listQuery.CancellationToken)
+                : query.Count();
+            return count > 0;
+        }
 
-        if (query is IAsyncEnumerable<TRecord>)
-            count = await query.CountAsync();
-        else
-            count = query.Count();
-
-        return true;
+        count = dbContext.Set<TRecord>().Count(listQuery.FilterExpressionString);
+        return count > 0;
     }
 }

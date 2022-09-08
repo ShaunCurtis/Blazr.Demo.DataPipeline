@@ -6,7 +6,7 @@
 namespace Blazr.Data;
 
 public class RecordQueryHandler<TRecord, TDbContext>
-    : ICQSHandler<RecordQuery<TRecord>, ValueTask<RecordProviderResult<TRecord>>>
+    : IHandler<RecordQuery<TRecord>, ValueTask<RecordProviderResult<TRecord>>>
         where TRecord : class, new()
         where TDbContext : DbContext
 {
@@ -24,7 +24,7 @@ public class RecordQueryHandler<TRecord, TDbContext>
 
         // first check if the record implements IRecord.  If so we can do a cast and then do the query via the Uid property directly 
         if ((new TRecord()) is IRecord)
-            record = await dbContext.Set<TRecord>().SingleOrDefaultAsync(item => ((IRecord)item).Uid == query.GuidId);
+            record = await dbContext.Set<TRecord>().SingleOrDefaultAsync(item => ((IRecord)item).Uid == query.GuidId, query.CancellationToken);
 
         // Try and use the EF FindAsync implementation
         if (record is null)

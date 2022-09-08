@@ -7,5 +7,5 @@
 namespace Blazr.App.Data;
 
 public interface IIdentityQueryHandler
-    : ICQSHandler<IdentityQuery, ValueTask<IdentityRequestResult>>
+    : IHandler<IdentityQuery, ValueTask<IdentityRequestResult>>
 {}

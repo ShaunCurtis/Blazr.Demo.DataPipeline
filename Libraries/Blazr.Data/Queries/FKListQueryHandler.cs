@@ -6,7 +6,7 @@
 namespace Blazr.Data;
 
 public class FKListQueryHandler<TRecord, TDbContext>
-    : ICQSHandler<FKListQuery<TRecord>, ValueTask<FKListProviderResult>>
+    : IHandler<FKListQuery<TRecord>, ValueTask<FKListProviderResult>>
         where TDbContext : DbContext
         where TRecord : class, IFkListItem, new()
 {
@@ -24,7 +24,7 @@ public class FKListQueryHandler<TRecord, TDbContext>
         if (listQuery is null)
             return FKListProviderResult.Failure("No Query defined");
 
-        IEnumerable<TRecord> dbSet = await dbContext.Set<TRecord>().ToListAsync();
+        IEnumerable<TRecord> dbSet = await dbContext.Set<TRecord>().ToListAsync(listQuery.CancellationToken);
 
         return FKListProviderResult.Successful(dbSet);
     }

@@ -7,11 +7,13 @@
 namespace Blazr.Core;
 
 public record RecordQuery<TRecord>
-    : ICQSRequest<ValueTask<RecordProviderResult<TRecord>>>
+    : IRequest<ValueTask<RecordProviderResult<TRecord>>>
 {
     public Guid TransactionId { get; } = Guid.NewGuid();
 
     public Guid GuidId { get; init; }
+
+    public CancellationToken CancellationToken { get; } = new CancellationToken();
 
     protected RecordQuery() { }
 

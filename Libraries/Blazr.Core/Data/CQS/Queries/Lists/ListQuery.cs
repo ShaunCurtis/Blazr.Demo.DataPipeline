@@ -10,12 +10,9 @@ public record ListQuery<TRecord>
     :ListQueryBase<TRecord>
     where TRecord : class, new()
 {
+    public ListQuery(ListProviderRequest<TRecord> request)
+    : base(request) { }
+
     public static ListQuery<TRecord> GetQuery(ListProviderRequest<TRecord> request)
-        => new ListQuery<TRecord>
-        {
-            StartIndex = request.StartIndex,
-            PageSize = request.PageSize,
-            SortExpressionString = request.SortExpressionString,
-            FilterExpressionString = request.FilterExpressionString
-        };
+        => new ListQuery<TRecord>(request);
 }

@@ -17,10 +17,13 @@ public readonly struct ListProviderRequest<TRecord>
 
     public string? FilterExpressionString { get; }
 
+    public CancellationToken CancellationToken { get; }
+
     public ListProviderRequest()
     {
         StartIndex = 0;
         PageSize = 10000;
+        CancellationToken = new CancellationToken();
         SortExpressionString = null;
         FilterExpressionString = null;
     }
@@ -28,6 +31,7 @@ public readonly struct ListProviderRequest<TRecord>
     {
         StartIndex = startIndex;
         PageSize = pageSize;
+        CancellationToken = new CancellationToken();
         SortExpressionString = null;
         FilterExpressionString = null;
     }
@@ -36,6 +40,7 @@ public readonly struct ListProviderRequest<TRecord>
     {
         StartIndex = startIndex;
         PageSize = pageSize;
+        CancellationToken = new CancellationToken();
         SortExpressionString = sortExpressionString;
         FilterExpressionString = filterExpressionString;
     }

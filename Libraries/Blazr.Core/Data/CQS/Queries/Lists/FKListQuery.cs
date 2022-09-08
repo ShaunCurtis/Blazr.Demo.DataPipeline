@@ -7,8 +7,11 @@
 namespace Blazr.Core;
 
 public record FKListQuery<TRecord>
-    : ICQSRequest<ValueTask<FKListProviderResult>>
+    : IRequest<ValueTask<FKListProviderResult>>
     where TRecord : class, IFkListItem, new()
 {
     public Guid TransactionId { get; } = Guid.NewGuid();
+
+    public CancellationToken CancellationToken { get; } = new CancellationToken();
+
 }

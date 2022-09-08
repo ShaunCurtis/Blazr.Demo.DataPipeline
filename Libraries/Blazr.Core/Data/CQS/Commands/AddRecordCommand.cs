@@ -10,8 +10,8 @@ public class AddRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
     where TRecord : class, new()
 {
-    private AddRecordCommand() { }
+    private AddRecordCommand(TRecord record) : base(record) { }
 
     public static AddRecordCommand<TRecord> GetCommand(TRecord record)
-        => new AddRecordCommand<TRecord> { Record = record };
+        => new AddRecordCommand<TRecord>(record);
 }

@@ -6,7 +6,7 @@
 namespace Blazr.Data;
 
 public class AddRecordCommandHandler<TRecord, TDbContext>
-    : ICQSHandler<AddRecordCommand<TRecord>, ValueTask<CommandResult>>
+    : IHandler<AddRecordCommand<TRecord>, ValueTask<CommandResult>>
     where TDbContext : DbContext
     where TRecord : class, new()
 {
@@ -19,7 +19,7 @@ public class AddRecordCommandHandler<TRecord, TDbContext>
     {
         using var dbContext = factory.CreateDbContext();
         dbContext.Add<TRecord>(command.Record);
-        return await dbContext.SaveChangesAsync() == 1
+        return await dbContext.SaveChangesAsync(command.CancellationToken) == 1
             ? CommandResult.Successful("Record Saved")
             : CommandResult.Failure("Error saving Record");
     }

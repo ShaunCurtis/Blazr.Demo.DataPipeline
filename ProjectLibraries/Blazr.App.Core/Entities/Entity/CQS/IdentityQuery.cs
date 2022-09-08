@@ -6,7 +6,7 @@
 namespace Blazr.App.Core;
 
 public record IdentityQuery
-    : ICQSRequest<ValueTask<IdentityRequestResult>>
+    : IRequest<ValueTask<IdentityRequestResult>>
 {
     public Guid TransactionId { get; } = Guid.NewGuid();
 

@@ -7,7 +7,7 @@
 namespace Blazr.Data;
 
 public class UpdateRecordCommandHandler<TRecord, TDbContext>
-    : ICQSHandler<UpdateRecordCommand<TRecord>, ValueTask<CommandResult>>
+    : IHandler<UpdateRecordCommand<TRecord>, ValueTask<CommandResult>>
     where TDbContext : DbContext
     where TRecord : class, new()
 {
@@ -20,7 +20,7 @@ public class UpdateRecordCommandHandler<TRecord, TDbContext>
     {
         using var dbContext = factory.CreateDbContext();
         dbContext.Update<TRecord>(command.Record);
-        return await dbContext.SaveChangesAsync() == 1
+        return await dbContext.SaveChangesAsync(command.CancellationToken) == 1
             ? CommandResult.Successful("Record Updated")
             : CommandResult.Failure("Error updating Record");
     }

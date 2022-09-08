@@ -6,6 +6,6 @@
 namespace Blazr.Core;
 
 public interface IListQueryHandler<TRecord>
-    : ICQSHandler<IListQuery<TRecord>, ValueTask<ListProviderResult<TRecord>>>
+    : IHandler<IListQuery<TRecord>, ValueTask<ListProviderResult<TRecord>>>
     where TRecord : class, new()
 { }

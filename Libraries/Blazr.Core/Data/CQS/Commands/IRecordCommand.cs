@@ -7,8 +7,10 @@
 namespace Blazr.Core;
 
 public interface IRecordCommand<TRecord> 
-    : ICQSRequest<ValueTask<CommandResult>>
+    : IRequest<ValueTask<CommandResult>>
     where TRecord : class, new()
 {
     public TRecord Record { get;}
+
+    public CancellationToken CancellationToken { get; }
 }
