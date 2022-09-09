@@ -17,7 +17,4 @@ public abstract record RecordCommandBase<TRecord>
     public CancellationToken CancellationToken { get; } = new CancellationToken();
 
     protected RecordCommandBase() { }
-
-    protected RecordCommandBase(TRecord record)
-        => this.Record = record;
 }

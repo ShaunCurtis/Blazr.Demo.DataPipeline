@@ -10,13 +10,9 @@ public class CQSDataBroker<TDbContext>
     where TDbContext : DbContext
 {
     private readonly IDbContextFactory<TDbContext> _factory;
-    private readonly IServiceProvider _serviceProvider;
 
-    public CQSDataBroker(IDbContextFactory<TDbContext> factory, IServiceProvider serviceProvider)
-    { 
-        _factory = factory;
-        _serviceProvider = serviceProvider;
-    }
+    public CQSDataBroker(IDbContextFactory<TDbContext> factory)
+        => _factory = factory;
 
     public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(ListQuery<TRecord> query) where TRecord : class, new()
     {

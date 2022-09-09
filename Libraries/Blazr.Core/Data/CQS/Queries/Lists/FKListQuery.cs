@@ -7,7 +7,7 @@
 namespace Blazr.Core;
 
 public record FKListQuery<TFKRecord>
-    : IRequest<ValueTask<FKListProviderResult>>
+    : IRequestAsync<ValueTask<FKListProviderResult>>
     where TFKRecord : class, IFkListItem, new()
 {
     public Guid TransactionId { get; init; } = Guid.NewGuid();

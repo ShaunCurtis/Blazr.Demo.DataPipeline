@@ -7,7 +7,7 @@
 namespace Blazr.Core;
 
 public record RecordQuery<TRecord>
-    : IRequest<ValueTask<RecordProviderResult<TRecord>>>
+    : IRequestAsync<ValueTask<RecordProviderResult<TRecord>>>
     where TRecord : class, new()
 {
     public Guid TransactionId { get; init; } = Guid.NewGuid();

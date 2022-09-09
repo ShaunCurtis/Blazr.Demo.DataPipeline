@@ -6,7 +6,7 @@
 namespace Blazr.Data;
 
 public class RecordQueryHandler<TRecord, TDbContext>
-    : IHandler<RecordQuery<TRecord>, ValueTask<RecordProviderResult<TRecord>>>
+    : IHandlerAsync<RecordQuery<TRecord>, ValueTask<RecordProviderResult<TRecord>>>
         where TRecord : class, new()
         where TDbContext : DbContext
 {

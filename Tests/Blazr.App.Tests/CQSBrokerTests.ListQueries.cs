@@ -51,6 +51,7 @@ public partial class CQSBrokerTests
         var listRequest = new ListProviderRequest<DboWeatherForecast>(0, pageSize);
 
         var query = ListQuery<DboWeatherForecast>.GetQuery(listRequest);
+
         var result = await broker.ExecuteAsync<DboWeatherForecast>(query);
 
         Assert.True(result.Success);
@@ -110,32 +111,13 @@ public partial class CQSBrokerTests
         var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize, false, SorterExpression, filterExpression);
 
         var query = ListQuery<DvoWeatherForecast>.GetQuery(listRequest);
+
+        var x = APIListProviderRequest<DvoWeatherForecast>.GetRequest(query);
+
         var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
 
         Assert.True(result.Success);
         Assert.Equal(testCount, result.Items.Count());
         Assert.True(result.TotalItemCount == testRecordCount);
     }
-
-    //[Fact]
-    //public async void TestCustomDvoWeatherForecastListCQSDataBroker()
-    //{
-    //    var provider = GetServiceProvider();
-    //    var broker = provider.GetService<ICQSDataBroker>()!;
-    //    var locationId = _weatherTestDataProvider.WeatherLocations.First().Uid;
-
-    //    var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherLocationId == locationId).Count();
-    //    int pageSize = 10;
-    //    var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
-
-    //    var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
-
-    //    var query = WeatherForecastListQuery.GetQuery(locationId, listRequest);
-    //    var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
-
-    //    Assert.True(result.Success);
-    //    Assert.Equal(testCount, result.Items.Count());
-    //    Assert.True(result.TotalItemCount == testRecordCount);
-    //}
-
 }

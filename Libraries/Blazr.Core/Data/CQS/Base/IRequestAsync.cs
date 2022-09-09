@@ -6,8 +6,9 @@
 
 namespace Blazr.Core;
 
-public interface IHandler<in TRequest, out TResult>
-    where TRequest : IRequest<TResult>
+public interface IRequestAsync<out TResult>
 {
-    TResult ExecuteAsync(TRequest request);
+    public Guid TransactionId { get;}
+    
+    public CancellationToken CancellationToken { get; }
 }

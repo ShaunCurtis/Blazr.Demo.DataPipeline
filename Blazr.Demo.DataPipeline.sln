@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.App.Data", "ProjectLi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{D75338D4-8E89-4620-938D-F71525A5073E}"
 	ProjectSection(SolutionItems) = preProject
+		documents\APITestData.md = documents\APITestData.md
+		documents\CQS-Data-Pipeline.md = documents\CQS-Data-Pipeline.md
 		documents\Data.md = documents\Data.md
 		documents\Design.md = documents\Design.md
 	EndProjectSection

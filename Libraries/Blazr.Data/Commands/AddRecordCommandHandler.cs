@@ -6,14 +6,14 @@
 namespace Blazr.Data;
 
 public class AddRecordCommandHandler<TRecord, TDbContext>
-    : IHandler<AddRecordCommand<TRecord>, ValueTask<CommandResult>>
+    : IHandlerAsync<AddRecordCommand<TRecord>, ValueTask<CommandResult>>
     where TDbContext : DbContext
     where TRecord : class, new()
 {
     protected IDbContextFactory<TDbContext> factory;
 
     public AddRecordCommandHandler(IDbContextFactory<TDbContext> factory)
-        =>  this.factory = factory;
+        => this.factory = factory;
 
     public async ValueTask<CommandResult> ExecuteAsync(AddRecordCommand<TRecord> command)
     {

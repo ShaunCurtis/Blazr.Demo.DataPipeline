@@ -7,7 +7,7 @@
 namespace Blazr.Core;
 
 public abstract record ListQueryBase<TRecord>
-    :IListQuery<TRecord>
+    : IListQuery<TRecord>
     where TRecord : class, new()
 {
     public int StartIndex { get; protected init; }
@@ -16,9 +16,9 @@ public abstract record ListQueryBase<TRecord>
 
     public bool SortDescending { get; protected init; }
 
-    public Expression<Func<TRecord, bool>>? FilterExpression { get; protected init;  }
+    public Expression<Func<TRecord, bool>>? FilterExpression { get; protected init; }
 
-    public Expression<Func<TRecord, object>>? SortExpression { get; protected init;  }
+    public Expression<Func<TRecord, object>>? SortExpression { get; protected init; }
 
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
@@ -27,7 +27,7 @@ public abstract record ListQueryBase<TRecord>
     protected ListQueryBase()
         => this.CancellationToken = new CancellationToken();
 
-    public ListQueryBase(ListProviderRequest<TRecord> request)
+    protected ListQueryBase(ListProviderRequest<TRecord> request)
     {
         this.StartIndex = request.StartIndex;
         this.PageSize = request.PageSize;
@@ -37,7 +37,7 @@ public abstract record ListQueryBase<TRecord>
         this.CancellationToken = request.CancellationToken;
     }
 
-    public ListQueryBase(APIListProviderRequest<TRecord> request)
+    protected ListQueryBase(APIListProviderRequest<TRecord> request)
     {
         this.StartIndex = request.StartIndex;
         this.PageSize = request.PageSize;
@@ -48,23 +48,19 @@ public abstract record ListQueryBase<TRecord>
 
     protected static Expression<Func<TRecord, bool>>? DeSerializeFilter(string? filter)
     {
-        if (filter is not null)
-        {
-            var serializer = new ExpressionSerializer(new JsonSerializer());
-            return (Expression<Func<TRecord, bool>>)serializer.DeserializeText(filter);
-        }
+        if (filter is null)
+            return null;
 
-        return null;
+        var serializer = new ExpressionSerializer(new JsonSerializer());
+        return (Expression<Func<TRecord, bool>>)serializer.DeserializeText(filter);
     }
 
     protected static Expression<Func<TRecord, object>>? DeSerializeSorter(string? sorter)
     {
-        if (sorter is not null)
-        {
-            var serializer = new ExpressionSerializer(new JsonSerializer());
-            return (Expression<Func<TRecord, object>>)serializer.DeserializeText(sorter);
-        }
+        if (sorter is null)
+            return null;
 
-        return null;
+        var serializer = new ExpressionSerializer(new JsonSerializer());
+        return (Expression<Func<TRecord, object>>)serializer.DeserializeText(sorter);
     }
 }

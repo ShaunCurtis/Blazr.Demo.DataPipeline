@@ -10,10 +10,10 @@ public record ListQuery<TRecord>
     :ListQueryBase<TRecord>
     where TRecord : class, new()
 {
-    public ListQuery(ListProviderRequest<TRecord> request)
+    private ListQuery(ListProviderRequest<TRecord> request)
     : base(request) { }
     
-    public ListQuery(APIListProviderRequest<TRecord> request)
+    private ListQuery(APIListProviderRequest<TRecord> request)
     : base(request) { }
 
     public static ListQuery<TRecord> GetQuery(ListProviderRequest<TRecord> request)
@@ -21,5 +21,4 @@ public record ListQuery<TRecord>
  
     public static ListQuery<TRecord> GetQuery(APIListProviderRequest<TRecord> request)
         => new ListQuery<TRecord>(request);
-
 }

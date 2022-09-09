@@ -30,25 +30,22 @@ public readonly struct APIListProviderRequest<TRecord>
 
     private static string? SerializeFilter(Expression<Func<TRecord, bool>>? filter)
     {
-        if (filter is not null)
-        {
-            var serializer = new ExpressionSerializer(new JsonSerializer());
-            return serializer.SerializeText(filter);
-        }
+        if (filter is null)
+            return null;
 
-        return null;
+        var serializer = new ExpressionSerializer(new JsonSerializer());
+        return serializer.SerializeText(filter);
     }
 
     private static string? SerializeSorter(Expression<Func<TRecord, object>>? sorter)
     {
-        if (sorter is not null)
-        {
-            var serializer = new ExpressionSerializer(new JsonSerializer());
-            return serializer.SerializeText(sorter);
-        }
+        if (sorter is null)
+            return null;
 
-        return null;
+        var serializer = new ExpressionSerializer(new JsonSerializer());
+        return serializer.SerializeText(sorter);
     }
+
 
     public static APIListProviderRequest<TRecord> GetRequest(IListQuery<TRecord> query)
         => new APIListProviderRequest<TRecord>(query);
