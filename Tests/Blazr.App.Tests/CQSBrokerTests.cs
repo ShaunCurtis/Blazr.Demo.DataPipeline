@@ -6,11 +6,11 @@
 
 namespace Blazr.Demo.Tests;
 
-public class CQSRecordBrokerTests
+public partial class CQSBrokerTests
 {
     private WeatherTestDataProvider _weatherTestDataProvider;
 
-    public CQSRecordBrokerTests()
+    public CQSBrokerTests()
         // Creates an instance of the Test Data provider
         => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
 
@@ -22,7 +22,6 @@ public class CQSRecordBrokerTests
         Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
         services.AddWeatherAppServerDataServices<InMemoryWeatherDbContext>(dbOptions);
         services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
-        services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
         // Creates a Service Provider from the Services collection
         // This is our DI container
         var provider = services.BuildServiceProvider();
@@ -32,22 +31,5 @@ public class CQSRecordBrokerTests
         WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
 
         return provider!;
-    }
-
-    [Fact]
-    public async void TestRecordCQSDataBroker()
-    {
-        var provider = GetServiceProvider();
-        var broker = provider.GetService<ICQSDataBroker>()!;
-
-        var testRecord = _weatherTestDataProvider.GetRandomRecord()!;
-        var CompareRecord = _weatherTestDataProvider.GetDvoWeatherForecast(testRecord);
-
-        var query = RecordQuery<DvoWeatherForecast>.GetQuery(testRecord.Uid);
-        var result = await broker.ExecuteAsync(query);
-
-        Assert.True(result.Success);
-        Assert.NotNull(result.Record);
-        Assert.Equal(CompareRecord, result.Record!);
     }
 }

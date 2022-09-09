@@ -10,19 +10,19 @@ public abstract record ListQueryBase<TRecord>
     :IListQuery<TRecord>
     where TRecord : class, new()
 {
-    public int StartIndex { get; }
+    public int StartIndex { get; protected init; }
 
-    public int PageSize { get; }
+    public int PageSize { get; protected init; }
 
-    public bool SortDescending { get; }
+    public bool SortDescending { get; protected init; }
 
-    public Expression<Func<TRecord, bool>>? FilterExpression { get; }
+    public Expression<Func<TRecord, bool>>? FilterExpression { get; protected init;  }
 
-    public Expression<Func<TRecord, object>>? SortExpression { get; }
+    public Expression<Func<TRecord, object>>? SortExpression { get; protected init;  }
 
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public CancellationToken CancellationToken { get; }
+    public CancellationToken CancellationToken { get; protected init; }
 
     protected ListQueryBase()
         => this.CancellationToken = new CancellationToken();

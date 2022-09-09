@@ -3,15 +3,17 @@
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
+
 namespace Blazr.App.Core;
 
-public record IdentityQuery
-    : IRequest<ValueTask<IdentityRequestResult>>
+public readonly struct APIIdentityProviderRequest
 {
-    public Guid TransactionId { get; } = Guid.NewGuid();
-
     public Guid IdentityId { get; init; } = Guid.Empty;
 
-    public static IdentityQuery GetQuery(Guid Uid)
-        => new IdentityQuery { IdentityId = Uid };
+    private APIIdentityProviderRequest(IdentityQuery query)
+        => IdentityId = query.IdentityId;
+
+    public static APIIdentityProviderRequest GetRequest(IdentityQuery query)
+        => new APIIdentityProviderRequest(query);
+
 }

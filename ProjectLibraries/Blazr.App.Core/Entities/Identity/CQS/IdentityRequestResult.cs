@@ -6,7 +6,7 @@
 
 namespace Blazr.App.Core;
 
-public class IdentityRequestResult
+public record IdentityRequestResult
 {
     public ClaimsIdentity? Identity { get; init; } = null;
 

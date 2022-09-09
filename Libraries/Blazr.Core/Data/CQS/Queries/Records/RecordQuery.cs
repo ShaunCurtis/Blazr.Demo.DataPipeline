@@ -8,15 +8,19 @@ namespace Blazr.Core;
 
 public record RecordQuery<TRecord>
     : IRequest<ValueTask<RecordProviderResult<TRecord>>>
+    where TRecord : class, new()
 {
-    public Guid TransactionId { get; } = Guid.NewGuid();
+    public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public Guid GuidId { get; init; }
+    public Guid Uid { get; init; }
 
     public CancellationToken CancellationToken { get; } = new CancellationToken();
 
     protected RecordQuery() { }
 
     public static RecordQuery<TRecord> GetQuery(Guid recordId)
-        => new RecordQuery<TRecord> { GuidId = recordId };
+        => new RecordQuery<TRecord> { Uid = recordId };
+
+    public static RecordQuery<TRecord> GetQuery(APIRecordProviderRequest<TRecord> request)
+        => new RecordQuery<TRecord> { TransactionId= request.TransactionId, Uid = request.Uid };
 }

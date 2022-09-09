@@ -1,39 +1,14 @@
+
+using System.Linq.Expressions;
 /// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
-
 namespace Blazr.Demo.Tests;
 
-public class CQSListQueryBrokerTests
+public partial class CQSBrokerTests
 {
-    private WeatherTestDataProvider _weatherTestDataProvider;
-
-    public CQSListQueryBrokerTests()
-        // Creates an instance of the Test Data provider
-        => _weatherTestDataProvider = WeatherTestDataProvider.Instance();
-
-    private ServiceProvider GetServiceProvider()
-    {
-        // Creates a Service Collection
-        var services = new ServiceCollection();
-        // Adds the application services to the collection
-        Action<DbContextOptionsBuilder> dbOptions = options => options.UseInMemoryDatabase($"WeatherDatabase-{Guid.NewGuid().ToString()}");
-        services.AddWeatherAppServerDataServices<InMemoryWeatherDbContext>(dbOptions);
-        services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
-        services.AddScoped<IListQueryHandler<DvoWeatherForecast>, WeatherForecastListQueryHandler<InMemoryWeatherDbContext>>();
-        // Creates a Service Provider from the Services collection
-        // This is our DI container
-        var provider = services.BuildServiceProvider();
-
-        // Adds the test data to the in memory database
-        var factory = provider.GetService<IDbContextFactory<InMemoryWeatherDbContext>>()!;
-        WeatherTestDataProvider.Instance().LoadDbContext<InMemoryWeatherDbContext>(factory);
-
-        return provider!;
-    }
-
     [Fact]
     public async void TestWeatherLocationListCQSDataBroker()
     {
@@ -115,6 +90,8 @@ public class CQSListQueryBrokerTests
         Assert.Equal(_weatherTestDataProvider.WeatherSummaries.Count(), result.Items.Count());
     }
 
+    private object sssss(DvoWeatherForecast item)
+        => item.TemperatureC;
 
     [Fact]
     public async void TestFilteredDvoWeatherForecastListCQSDataBroker()
@@ -127,7 +104,10 @@ public class CQSListQueryBrokerTests
         int pageSize = 10;
         var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
 
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize, null, $"WeatherLocationId.Equals({locationId})");
+        Expression<Func<DvoWeatherForecast,object>> SorterExpression = (DvoWeatherForecast item) => item.TemperatureC;
+        Expression<Func<DvoWeatherForecast, bool>> filterExpression = (DvoWeatherForecast item) => item.WeatherLocationId == locationId;
+
+        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize, false, SorterExpression, filterExpression);
 
         var query = ListQuery<DvoWeatherForecast>.GetQuery(listRequest);
         var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
@@ -137,25 +117,25 @@ public class CQSListQueryBrokerTests
         Assert.True(result.TotalItemCount == testRecordCount);
     }
 
-    [Fact]
-    public async void TestCustomDvoWeatherForecastListCQSDataBroker()
-    {
-        var provider = GetServiceProvider();
-        var broker = provider.GetService<ICQSDataBroker>()!;
-        var locationId = _weatherTestDataProvider.WeatherLocations.First().Uid;
+    //[Fact]
+    //public async void TestCustomDvoWeatherForecastListCQSDataBroker()
+    //{
+    //    var provider = GetServiceProvider();
+    //    var broker = provider.GetService<ICQSDataBroker>()!;
+    //    var locationId = _weatherTestDataProvider.WeatherLocations.First().Uid;
 
-        var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherLocationId == locationId).Count();
-        int pageSize = 10;
-        var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
+    //    var testRecordCount = _weatherTestDataProvider.WeatherForecasts.Where(item => item.WeatherLocationId == locationId).Count();
+    //    int pageSize = 10;
+    //    var testCount = testRecordCount > pageSize ? pageSize : testRecordCount;
 
-        var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
+    //    var listRequest = new ListProviderRequest<DvoWeatherForecast>(0, pageSize);
 
-        var query = WeatherForecastListQuery.GetQuery(locationId, listRequest);
-        var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
+    //    var query = WeatherForecastListQuery.GetQuery(locationId, listRequest);
+    //    var result = await broker.ExecuteAsync<DvoWeatherForecast>(query);
 
-        Assert.True(result.Success);
-        Assert.Equal(testCount, result.Items.Count());
-        Assert.True(result.TotalItemCount == testRecordCount);
-    }
+    //    Assert.True(result.Success);
+    //    Assert.Equal(testCount, result.Items.Count());
+    //    Assert.True(result.TotalItemCount == testRecordCount);
+    //}
 
 }

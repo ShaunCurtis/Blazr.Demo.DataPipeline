@@ -12,7 +12,14 @@ public record ListQuery<TRecord>
 {
     public ListQuery(ListProviderRequest<TRecord> request)
     : base(request) { }
+    
+    public ListQuery(APIListProviderRequest<TRecord> request)
+    : base(request) { }
 
     public static ListQuery<TRecord> GetQuery(ListProviderRequest<TRecord> request)
         => new ListQuery<TRecord>(request);
+ 
+    public static ListQuery<TRecord> GetQuery(APIListProviderRequest<TRecord> request)
+        => new ListQuery<TRecord>(request);
+
 }

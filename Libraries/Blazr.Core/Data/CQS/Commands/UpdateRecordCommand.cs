@@ -6,12 +6,16 @@
 
 namespace Blazr.Core;
 
-public class UpdateRecordCommand<TRecord>
+public record UpdateRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
     where TRecord : class, new()
 {
-    public UpdateRecordCommand(TRecord record) : base(record) { }
+    private UpdateRecordCommand() { }
 
     public static UpdateRecordCommand<TRecord> GetCommand(TRecord record)
-        => new UpdateRecordCommand<TRecord>(record);
+        => new UpdateRecordCommand<TRecord> { Record = record };
+
+    public static UpdateRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request)
+        => new UpdateRecordCommand<TRecord> { TransactionId = request.TransactionId, Record = request.Record };
+
 }

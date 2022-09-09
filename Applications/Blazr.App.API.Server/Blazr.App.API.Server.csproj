@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\Blazr.Core\Blazr.Core.csproj" />
+    <ProjectReference Include="..\..\Libraries\Blazr.Data\Blazr.Data.csproj" />
+    <ProjectReference Include="..\..\ProjectLibraries\Blazr.App.Controllers\Blazr.App.Controllers.csproj" />
+    <ProjectReference Include="..\..\ProjectLibraries\Blazr.App.Core\Blazr.App.Core.csproj" />
+    <ProjectReference Include="..\..\ProjectLibraries\Blazr.App.Data\Blazr.App.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+</Project>

@@ -24,16 +24,6 @@ public class CQSDataBroker<TDbContext>
         return await handler.ExecuteAsync(query);
     }
 
-    public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(IListQuery<TRecord> query) where TRecord : class, new()
-    {
-        var queryType = query.GetType();
-        var handler = _serviceProvider.GetService<IListQueryHandler<TRecord>>();
-        if (handler == null)
-            throw new NullReferenceException("No Handler service registed for the List Query");
-
-        return await handler.ExecuteAsync(query);
-    }
-
     public async ValueTask<RecordProviderResult<TRecord>> ExecuteAsync<TRecord>(RecordQuery<TRecord> query) where TRecord : class, new()
     {
         var handler = new RecordQueryHandler<TRecord, TDbContext>(_factory);

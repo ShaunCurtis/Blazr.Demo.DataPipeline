@@ -49,4 +49,7 @@ public readonly struct APIListProviderRequest<TRecord>
 
         return null;
     }
+
+    public static APIListProviderRequest<TRecord> GetRequest(IListQuery<TRecord> query)
+        => new APIListProviderRequest<TRecord>(query);
 }

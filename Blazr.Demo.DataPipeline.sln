@@ -28,6 +28,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		readme.md = readme.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Applications", "Applications", "{85478E24-3763-44D1-9371-465ACF7B7888}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.App.API.Server", "Applications\Blazr.App.API.Server\Blazr.App.API.Server.csproj", "{F7118553-8760-42BA-9BD7-A85BA842D245}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.App.Controllers", "ProjectLibraries\Blazr.App.Controllers\Blazr.App.Controllers.csproj", "{03B99126-0D3F-4CAC-8489-13F5F57EA6F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +60,14 @@ Global
 		{3B40CE6B-9890-46A8-92C7-F125C3FAC443}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B40CE6B-9890-46A8-92C7-F125C3FAC443}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B40CE6B-9890-46A8-92C7-F125C3FAC443}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7118553-8760-42BA-9BD7-A85BA842D245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7118553-8760-42BA-9BD7-A85BA842D245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7118553-8760-42BA-9BD7-A85BA842D245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7118553-8760-42BA-9BD7-A85BA842D245}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03B99126-0D3F-4CAC-8489-13F5F57EA6F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03B99126-0D3F-4CAC-8489-13F5F57EA6F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03B99126-0D3F-4CAC-8489-13F5F57EA6F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03B99126-0D3F-4CAC-8489-13F5F57EA6F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -63,6 +77,8 @@ Global
 		{079277DE-327A-4FFF-B075-7A482FF076E6} = {4F826D80-0437-4521-90E1-2E01958E5C58}
 		{3DC559AD-3D33-46C2-908C-9A5E55D52BD1} = {F9F56359-3EC3-44B9-8B6F-223E26DF0273}
 		{3B40CE6B-9890-46A8-92C7-F125C3FAC443} = {F9F56359-3EC3-44B9-8B6F-223E26DF0273}
+		{F7118553-8760-42BA-9BD7-A85BA842D245} = {85478E24-3763-44D1-9371-465ACF7B7888}
+		{03B99126-0D3F-4CAC-8489-13F5F57EA6F2} = {F9F56359-3EC3-44B9-8B6F-223E26DF0273}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9DD117E7-FA92-4E9E-A306-0B1F95902DDF}
