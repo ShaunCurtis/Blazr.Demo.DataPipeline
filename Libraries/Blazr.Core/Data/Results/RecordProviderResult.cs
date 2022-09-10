@@ -14,7 +14,7 @@ public record RecordProviderResult<TRecord>
 
     public string Message { get; init; } = string.Empty;
 
-    protected RecordProviderResult() { }
+    public RecordProviderResult() { }
 
     public static RecordProviderResult<TRecord> Failure(string message)
         => new RecordProviderResult<TRecord> { Message = message };

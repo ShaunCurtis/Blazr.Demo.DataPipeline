@@ -16,7 +16,7 @@ public record ListProviderResult<TRecord>
 
     public string Message { get; init; } = String.Empty;
 
-    protected ListProviderResult() { }
+    public ListProviderResult() { }
 
     public static ListProviderResult<TRecord> Failure(string message)
         => new ListProviderResult<TRecord> { Message = message };

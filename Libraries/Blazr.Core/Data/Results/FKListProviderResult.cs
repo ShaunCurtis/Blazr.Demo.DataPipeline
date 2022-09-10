@@ -6,19 +6,20 @@
 
 namespace Blazr.Core;
 
-public record FKListProviderResult
+public record FKListProviderResult<TFkListItem>
+    where TFkListItem :IFkListItem
 {
-    public IEnumerable<IFkListItem> Items { get; init; } = Enumerable.Empty<IFkListItem>();
+    public IEnumerable<TFkListItem> Items { get; init; } = Enumerable.Empty<TFkListItem>();
 
     public bool Success { get; init; }
 
     public string? Message { get; init; }
 
-    protected FKListProviderResult() { }
+    public FKListProviderResult() { }
 
-    public static FKListProviderResult Failure(string message)
-        => new FKListProviderResult { Message = message };
+    public static FKListProviderResult<TFkListItem> Failure(string message)
+        => new FKListProviderResult<TFkListItem> { Message = message };
 
-    public static FKListProviderResult Successful(IEnumerable<IFkListItem> items, string? message = null)
-        => new FKListProviderResult { Items = items, Success = true, Message = message ?? "The query completed successfully" };
+    public static FKListProviderResult<TFkListItem> Successful(IEnumerable<TFkListItem> items, string? message = null)
+        => new FKListProviderResult<TFkListItem> { Items = items, Success = true, Message = message ?? "The query completed successfully" };
 }

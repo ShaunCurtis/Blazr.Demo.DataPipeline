@@ -6,6 +6,7 @@
 
 namespace Blazr.App.Controllers;
 
+[Authorize(Roles = "VisitorRole, UserRole, AdminRole")]
 [ApiController]
 public class DboWeatherLocationController : AppControllerBase<DboWeatherLocation>
 {

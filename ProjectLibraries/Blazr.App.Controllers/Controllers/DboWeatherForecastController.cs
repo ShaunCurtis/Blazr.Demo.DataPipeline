@@ -7,6 +7,7 @@
 namespace Blazr.App.Controllers;
 
 [ApiController]
+[Authorize(Roles = "VisitorRole, UserRole, AdminRole")]
 public class DboWeatherForecastController : AppControllerBase<DboWeatherForecast>
 {
     public DboWeatherForecastController(ICQSDataBroker dataBroker)

@@ -1,4 +1,4 @@
-# Building A Succinct CQS Data Pipeline
+# Building A Generic CQS Data Pipeline
 
 The CQS implementations I've seen have always looked incredibly verbose: the number of classes scared me. I recently had cause to revisit CQS on an application re-write and decided to work on creating a more succinct implementation. This article describes what I've achieved.
 
@@ -38,13 +38,18 @@ Conceptually, it's very simple, and relatively easy to implement. The problem is
 
 ## Solution Layout and Design
 
-The solution consists of a set of libraries organised on Clean Design principles. It's designed to work in any DotNetCore environment. Blazr.Core and Blazr.Data are the two base libraries that can be used for any implementation. Blazr.Demo.Core and Blazr.Demo.Data are the two application specific libraries.
+The solution consists of a set of libraries organised on Clean Design principles. It's designed to work in any DotNetCore environment. 
 
-The front end application is an XUnit test project to both demonstrate and test the code.
+- *Blazr.Core* and *Blazr.Data* are the two base libraries that can be used for any implementation. 
+- *Blazr.Demo.Core*, *Blazr.Demo.Data* and *Blazr.Demo.Controllers* are the three application specific libraries.
+- *Blazr.App.Tests* and *Blazr.App.SPI.Tests* are the two test projects.
+- *Blazr.App.API.Server* is the Web API solution.
+
+![Solution Structure](./images/solution-structure.png)
 
 I use it in Blazor projects.
 
-## Interfaces and Classes
+## Base Interfaces
 
 The basic methodology can be defined by two interfaces.
 
@@ -82,6 +87,66 @@ To build a more succinct implementation we need to accept:
  - We need a methodology for the 20%.
  - We need a "compliant" generics based ORM to interface with our data store. This implementation uses Entity Framework which provides that.
  - Code some quite complicated generics in the base classes to abstract functionality into boilerplate code.
+
+## The Server Pipeline
+
+The server pipeline is shown below.
+
+![Server Pipeline](./images/cqs-server-pipeline.png)
+
+The API pipeline is adds the extra API layers.
+
+![API Pipeline](./images/cqs-api-pipeline.png)
+
+## A Command Pipeline
+
+An update command starts with the front end building an `UpdsteRecordCommand`
+
+The interface defines:
+
+1. A Command returns a `ValueTask<CommandResult>`
+2. A single `Record` property defining the record the operation will be applied to.
+
+```csharp
+public interface IRecordCommand<TRecord> 
+    : IRequestAsync<ValueTask<CommandResult>>
+    where TRecord : class, new()
+{
+    public TRecord Record { get;}
+}
+```
+```csharp
+public abstract record RecordCommandBase<TRecord>
+     : IRecordCommand<TRecord>
+    where TRecord : class, new()
+{
+    public Guid TransactionId { get; init; } = Guid.NewGuid();
+    public TRecord Record { get; init; } = default!;
+    public CancellationToken CancellationToken { get; init; } = default; 
+    protected RecordCommandBase() { }
+}
+```
+```csharp
+public record UpdateRecordCommand<TRecord>
+     : RecordCommandBase<TRecord>
+    where TRecord : class, new()
+{
+    private UpdateRecordCommand() { }
+
+    public static UpdateRecordCommand<TRecord> GetCommand(TRecord record)
+        => new UpdateRecordCommand<TRecord> { Record = record };
+
+    public static UpdateRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken = default)
+        => new UpdateRecordCommand<TRecord> { TransactionId = request.TransactionId, Record = request.Record, CancellationToken= cancellationToken };
+}
+```
+
+Notes:
+1. The objects are all declared as `records`: value based immutable objects.
+2. The request has a `TransactionId` that is passed down the pipeline to log any issues against.
+3. The request generates a `CancellationToken` that is passed to async methods and can be used to cancel an operation.
+4. `Record` is the updated record.
+5. The second constructor is used to rebuild the command at the server side of an API call.  It passes the `TranactionId` from the call into the server side pipeline.
 
 ## Results
 

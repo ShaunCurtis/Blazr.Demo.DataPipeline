@@ -14,7 +14,7 @@ public record CommandResult
 
     public string Message { get; init; } = string.Empty;
 
-    private CommandResult() {}
+    public CommandResult() {}
 
     public static CommandResult Failure(string message)
         => new CommandResult { Message= message };

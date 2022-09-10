@@ -18,6 +18,7 @@ public static class WeatherAppDataServices
     {
         services.AddDbContextFactory<TDbContext>(options);
         services.AddSingleton<ICQSDataBroker, CQSDataBroker<InMemoryWeatherDbContext>>();
+        services.AddScoped<IIdentityQueryHandler, IdentityQueryHandler<InMemoryWeatherDbContext>>();
 
         services.AddWeatherServices();
     }

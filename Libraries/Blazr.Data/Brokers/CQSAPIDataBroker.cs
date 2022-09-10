@@ -47,9 +47,9 @@ public class CQSAPIDataBroker
         return result ?? RecordProviderResult<TRecord>.Failure($"{response.StatusCode} = {response.ReasonPhrase}");
     }
 
-    public async ValueTask<FKListProviderResult> ExecuteAsync<TRecord>(FKListQuery<TRecord> query) where TRecord : class, IFkListItem, new()
+    public async ValueTask<FKListProviderResult<TRecord>> ExecuteAsync<TRecord>(FKListQuery<TRecord> query) where TRecord : class, IFkListItem, new()
     {
-        FKListProviderResult? result = null;
+        FKListProviderResult<TRecord>? result = null;
 
         var entityname = (new TRecord()).GetType().Name;
         var request = APIFKListQueryProviderRequest<TRecord>.GetRequest(query);
@@ -58,9 +58,9 @@ public class CQSAPIDataBroker
         var response = await _httpClient.PostAsJsonAsync<APIFKListQueryProviderRequest<TRecord>>($"/api/{entityname}/fklistquery", request, query.CancellationToken);
 
         if (response.IsSuccessStatusCode)
-            result = await response.Content.ReadFromJsonAsync<FKListProviderResult>();
+            result = await response.Content.ReadFromJsonAsync<FKListProviderResult<TRecord>>();
 
-        return result ?? FKListProviderResult.Failure($"{response.StatusCode} = {response.ReasonPhrase}"); ;
+        return result ?? FKListProviderResult<TRecord>.Failure($"{response.StatusCode} = {response.ReasonPhrase}"); ;
     }
 
     public async ValueTask<CommandResult> ExecuteAsync<TRecord>(AddRecordCommand<TRecord> command) where TRecord : class, new()

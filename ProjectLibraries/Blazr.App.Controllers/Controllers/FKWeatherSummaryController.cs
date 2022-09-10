@@ -9,9 +9,9 @@ namespace Blazr.App.Controllers;
 [ApiController]
 [Authorize(Roles = "VisitorRole, UserRole, AdminRole")]
 
-public class FKWeatherLocationController : FKControllerBase<FkWeatherLocation>
+public class FKWeatherSummaryController : FKControllerBase<FkWeatherSummary>
 {
-    public FKWeatherLocationController(ICQSDataBroker dataBroker)
+    public FKWeatherSummaryController(ICQSDataBroker dataBroker)
         : base(dataBroker)
     { }
 }

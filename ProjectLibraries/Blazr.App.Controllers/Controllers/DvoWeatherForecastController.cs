@@ -7,6 +7,8 @@
 namespace Blazr.App.Controllers;
 
 [ApiController]
+[Authorize(Roles = "VisitorRole, UserRole, AdminRole")]
+
 public class DvoWeatherForecastController : AppControllerBase<DvoWeatherForecast>
 {
     public DvoWeatherForecastController(ICQSDataBroker dataBroker)

@@ -6,7 +6,7 @@
 namespace Blazr.Data;
 
 public class FKListQueryHandler<TRecord, TDbContext>
-    : IHandlerAsync<FKListQuery<TRecord>, ValueTask<FKListProviderResult>>
+    : IHandlerAsync<FKListQuery<TRecord>, ValueTask<FKListProviderResult<TRecord>>>
         where TDbContext : DbContext
         where TRecord : class, IFkListItem, new()
 {
@@ -16,16 +16,16 @@ public class FKListQueryHandler<TRecord, TDbContext>
     public FKListQueryHandler(IDbContextFactory<TDbContext> factory)
         => this.factory = factory;
 
-    public async ValueTask<FKListProviderResult> ExecuteAsync(FKListQuery<TRecord> listQuery)
+    public async ValueTask<FKListProviderResult<TRecord>> ExecuteAsync(FKListQuery<TRecord> listQuery)
     {
         using var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         if (listQuery is null)
-            return FKListProviderResult.Failure("No Query defined");
+            return FKListProviderResult<TRecord>.Failure("No Query defined");
 
         IEnumerable<TRecord> dbSet = await dbContext.Set<TRecord>().ToListAsync(listQuery.CancellationToken);
 
-        return FKListProviderResult.Successful(dbSet);
+        return FKListProviderResult<TRecord>.Successful(dbSet);
     }
 }

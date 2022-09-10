@@ -12,7 +12,7 @@ public abstract record RecordCommandBase<TRecord>
 {
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public TRecord Record { get; protected init; } = default!;
+    public TRecord Record { get; init; } = default!;
 
     public CancellationToken CancellationToken { get; init; } = default; 
 

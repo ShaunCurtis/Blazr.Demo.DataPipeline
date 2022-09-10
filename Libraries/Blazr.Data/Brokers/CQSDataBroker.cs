@@ -26,7 +26,7 @@ public class CQSDataBroker<TDbContext>
         return await handler.ExecuteAsync(query);
     }
 
-    public async ValueTask<FKListProviderResult> ExecuteAsync<TRecord>(FKListQuery<TRecord> query) where TRecord : class, IFkListItem, new()
+    public async ValueTask<FKListProviderResult<TRecord>> ExecuteAsync<TRecord>(FKListQuery<TRecord> query) where TRecord : class, IFkListItem, new()
     {
         var handler = new FKListQueryHandler<TRecord, TDbContext>(_factory);
         return await handler.ExecuteAsync(query);

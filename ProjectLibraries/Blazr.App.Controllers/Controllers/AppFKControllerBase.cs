@@ -17,9 +17,9 @@ public class FKControllerBase<TFKRecord>
     public FKControllerBase(ICQSDataBroker dataBroker)
         => _dataBroker = dataBroker;
 
-    [Mvc.Route("/api/[controller]/query")]
+    [Mvc.Route("/api/[controller]/fklistquery")]
     [Mvc.HttpPost]
-    public async Task<FKListProviderResult> FKListQuery([FromBody] APIFKListQueryProviderRequest<TFKRecord> request, CancellationToken cancellationToken)
+    public async Task<FKListProviderResult<TFKRecord>> FKListQuery([FromBody] APIFKListQueryProviderRequest<TFKRecord> request, CancellationToken cancellationToken)
     {
         try
         {
@@ -28,7 +28,7 @@ public class FKControllerBase<TFKRecord>
         }
         catch (Exception e)
         {
-            return FKListProviderResult.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+            return FKListProviderResult<TFKRecord>.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
         }
     }
 }
