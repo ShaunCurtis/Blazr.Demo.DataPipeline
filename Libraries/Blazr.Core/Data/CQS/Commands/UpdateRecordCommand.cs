@@ -15,7 +15,7 @@ public record UpdateRecordCommand<TRecord>
     public static UpdateRecordCommand<TRecord> GetCommand(TRecord record)
         => new UpdateRecordCommand<TRecord> { Record = record };
 
-    public static UpdateRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request)
-        => new UpdateRecordCommand<TRecord> { TransactionId = request.TransactionId, Record = request.Record };
+    public static UpdateRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken = default)
+        => new UpdateRecordCommand<TRecord> { TransactionId = request.TransactionId, Record = request.Record, CancellationToken= cancellationToken };
 
 }

@@ -8,6 +8,8 @@ namespace Blazr.App.Core;
 
 public readonly struct APIIdentityProviderRequest
 {
+    public Guid TransactionId { get; init; } = Guid.NewGuid();
+
     public Guid IdentityId { get; init; } = Guid.Empty;
 
     private APIIdentityProviderRequest(IdentityQuery query)
@@ -15,5 +17,4 @@ public readonly struct APIIdentityProviderRequest
 
     public static APIIdentityProviderRequest GetRequest(IdentityQuery query)
         => new APIIdentityProviderRequest(query);
-
 }

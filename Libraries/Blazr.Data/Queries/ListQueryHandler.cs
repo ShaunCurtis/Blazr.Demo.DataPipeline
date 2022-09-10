@@ -35,7 +35,7 @@ public class ListQueryHandler<TRecord, TDbContext>
 
     protected virtual async ValueTask<bool> GetItemsAsync()
     {
-        var dbContext = this.factory.CreateDbContext();
+        using var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         IQueryable<TRecord> query = dbContext.Set<TRecord>();
@@ -65,7 +65,7 @@ public class ListQueryHandler<TRecord, TDbContext>
 
     protected virtual async ValueTask<bool> GetCountAsync()
     {
-        var dbContext = this.factory.CreateDbContext();
+        using var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         IQueryable<TRecord> query = dbContext.Set<TRecord>();

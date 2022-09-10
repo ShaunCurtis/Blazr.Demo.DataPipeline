@@ -14,7 +14,7 @@ public abstract record RecordCommandBase<TRecord>
 
     public TRecord Record { get; protected init; } = default!;
 
-    public CancellationToken CancellationToken { get; } = new CancellationToken();
+    public CancellationToken CancellationToken { get; init; } = default; 
 
     protected RecordCommandBase() { }
 }

@@ -1,4 +1,6 @@
-﻿/// ============================================================
+﻿
+using Blazr.Core;
+/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
@@ -17,10 +19,16 @@ public class FKControllerBase<TFKRecord>
 
     [Mvc.Route("/api/[controller]/query")]
     [Mvc.HttpPost]
-    public async Task<FKListProviderResult> FKListQuery([FromBody] APIFKListQueryProviderRequest<TFKRecord> request)
+    public async Task<FKListProviderResult> FKListQuery([FromBody] APIFKListQueryProviderRequest<TFKRecord> request, CancellationToken cancellationToken)
     {
-        FKListQuery<TFKRecord> query = FKListQuery<TFKRecord>.GetQuery(request);
-
-        return await _dataBroker.ExecuteAsync<TFKRecord>(query);
+        try
+        {
+            FKListQuery<TFKRecord> query = FKListQuery<TFKRecord>.GetQuery(request, cancellationToken);
+            return await _dataBroker.ExecuteAsync<TFKRecord>(query);
+        }
+        catch (Exception e)
+        {
+            return FKListProviderResult.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+        }
     }
 }

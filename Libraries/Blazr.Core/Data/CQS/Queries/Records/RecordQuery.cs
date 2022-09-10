@@ -14,13 +14,13 @@ public record RecordQuery<TRecord>
 
     public Guid Uid { get; init; }
 
-    public CancellationToken CancellationToken { get; } = new CancellationToken();
+    public CancellationToken CancellationToken { get; init; } = default;
 
     protected RecordQuery() { }
 
     public static RecordQuery<TRecord> GetQuery(Guid recordId)
         => new RecordQuery<TRecord> { Uid = recordId };
 
-    public static RecordQuery<TRecord> GetQuery(APIRecordProviderRequest<TRecord> request)
-        => new RecordQuery<TRecord> { TransactionId= request.TransactionId, Uid = request.Uid };
+    public static RecordQuery<TRecord> GetQuery(APIRecordProviderRequest<TRecord> request, CancellationToken cancellationToken = default)
+        => new RecordQuery<TRecord> { TransactionId = request.TransactionId, Uid = request.Uid, CancellationToken = cancellationToken };
 }

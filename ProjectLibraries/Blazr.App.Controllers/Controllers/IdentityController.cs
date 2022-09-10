@@ -16,6 +16,16 @@ public class IdentityController
 
     [Mvc.HttpPost]
     [Mvc.Route("/api/[controller]/authenicate")]
-    public async Task<IdentityRequestResult> GetIdentity([FromBody] IdentityQuery query)
-        => await _identityCQSHandler.ExecuteAsync(query);
+    public async Task<IdentityRequestResult> GetIdentity([FromBody] APIIdentityProviderRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            IdentityQuery query = IdentityQuery.GetQuery(request, cancellationToken);
+            return await _identityCQSHandler.ExecuteAsync(query);
+        }
+        catch (Exception e)
+        {
+            return IdentityRequestResult.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+        }
+    }
 }

@@ -18,7 +18,7 @@ public class FKListQueryHandler<TRecord, TDbContext>
 
     public async ValueTask<FKListProviderResult> ExecuteAsync(FKListQuery<TRecord> listQuery)
     {
-        var dbContext = this.factory.CreateDbContext();
+        using var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         if (listQuery is null)

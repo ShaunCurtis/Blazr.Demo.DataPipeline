@@ -9,6 +9,8 @@ namespace Blazr.Core;
 public readonly struct APIListProviderRequest<TRecord>
     where TRecord : class, new()
 {
+    public Guid TransactionId { get; }
+
     public int StartIndex { get; init; }
 
     public int PageSize { get; init; }
@@ -21,6 +23,7 @@ public readonly struct APIListProviderRequest<TRecord>
 
     private APIListProviderRequest(IListQuery<TRecord> query)
     {
+        TransactionId = query.TransactionId;
         StartIndex = query.StartIndex;
         PageSize = query.PageSize;
         SortDescending = query.SortDescending;

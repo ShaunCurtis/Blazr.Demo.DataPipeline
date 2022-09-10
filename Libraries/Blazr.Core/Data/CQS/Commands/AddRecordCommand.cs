@@ -15,6 +15,6 @@ public record AddRecordCommand<TRecord>
     public static AddRecordCommand<TRecord> GetCommand(TRecord record)
         => new AddRecordCommand<TRecord> { Record=record};
 
-    public static AddRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request)
-        => new AddRecordCommand<TRecord>{TransactionId= request.TransactionId, Record=request.Record};
+    public static AddRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken = default)
+        => new AddRecordCommand<TRecord>{TransactionId= request.TransactionId, Record=request.Record, CancellationToken = cancellationToken};
 }

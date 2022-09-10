@@ -13,12 +13,12 @@ public record ListQuery<TRecord>
     private ListQuery(ListProviderRequest<TRecord> request)
     : base(request) { }
     
-    private ListQuery(APIListProviderRequest<TRecord> request)
-    : base(request) { }
+    private ListQuery(APIListProviderRequest<TRecord> request, CancellationToken? cancellationToken = null)
+    : base(request, cancellationToken) { }
 
     public static ListQuery<TRecord> GetQuery(ListProviderRequest<TRecord> request)
         => new ListQuery<TRecord>(request);
  
-    public static ListQuery<TRecord> GetQuery(APIListProviderRequest<TRecord> request)
-        => new ListQuery<TRecord>(request);
+    public static ListQuery<TRecord> GetQuery(APIListProviderRequest<TRecord> request, CancellationToken cancellationToken = default)
+        => new ListQuery<TRecord>(request, cancellationToken);
 }

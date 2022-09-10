@@ -1,6 +1,4 @@
-﻿
-using System.Net;
-/// ============================================================
+﻿/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
@@ -19,59 +17,76 @@ public abstract class AppControllerBase<TRecord>
 
     [Mvc.Route("/api/[controller]/listquery")]
     [Mvc.HttpPost]
-    public async Task<ListProviderResult<TRecord>> ListQuery([FromBody] APIListProviderRequest<TRecord> request)
+    public async Task<ListProviderResult<TRecord>> ListQuery([FromBody] APIListProviderRequest<TRecord> request, CancellationToken cancellationToken)
     {
-        ListQuery<TRecord> query = ListQuery<TRecord>.GetQuery(request);
-        return await _dataBroker.ExecuteAsync<TRecord>(query);
-
+        try
+        {
+            ListQuery<TRecord> query = ListQuery<TRecord>.GetQuery(request, cancellationToken);
+            return await _dataBroker.ExecuteAsync<TRecord>(query);
+        }
+        catch (Exception e)
+        {
+            return ListProviderResult<TRecord>.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+        }
     }
 
     [Mvc.Route("/api/[controller]/recordquery")]
     [Mvc.HttpPost]
-    public async Task<RecordProviderResult<TRecord>> RecordQuery([FromBody] APIRecordProviderRequest<TRecord> request)
+    public async Task<RecordProviderResult<TRecord>> RecordQuery([FromBody] APIRecordProviderRequest<TRecord> request, CancellationToken cancellationToken)
     {
-        RecordQuery<TRecord> query = RecordQuery<TRecord>.GetQuery(request);
-        return await _dataBroker.ExecuteAsync<TRecord>(query);
+        try
+        {
+            RecordQuery<TRecord> query = RecordQuery<TRecord>.GetQuery(request, cancellationToken);
+            return await _dataBroker.ExecuteAsync<TRecord>(query);
+        }
+        catch (Exception e)
+        {
+            return RecordProviderResult<TRecord>.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+        }
     }
 
     [Mvc.Route("/api/[controller]/addrecordcommand")]
     [Mvc.HttpPost]
-    public async Task<CommandResult> AddRecordCommand([FromBody] APICommandProviderRequest<TRecord> request)
-    {
-        AddRecordCommand<TRecord> command = AddRecordCommand<TRecord>.GetCommand(request);
-        return await _dataBroker.ExecuteAsync<TRecord>(command);
-    }
-
-    [Mvc.Route("/api/[controller]/updaterecordcommand")]
-    [Mvc.HttpPost]
-    public async Task<CommandResult> UpdateRecordCommand([FromBody] APICommandProviderRequest<TRecord> request)
-    {
-        UpdateRecordCommand<TRecord> command = UpdateRecordCommand<TRecord>.GetCommand(request);
-        return await _dataBroker.ExecuteAsync<TRecord>(command);
-    }
-
-    [Mvc.Route("/api/[controller]/deleterecordcommand")]
-    [Mvc.HttpPost]
-    public async Task<CommandResult> DeleteRecordCommand([FromBody] APICommandProviderRequest<TRecord> request)
+    public async Task<CommandResult> AddRecordCommand([FromBody] APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken)
     {
         try
         {
-            DeleteRecordCommand<TRecord> command = DeleteRecordCommand<TRecord>.GetCommand(request);
+            AddRecordCommand<TRecord> command = AddRecordCommand<TRecord>.GetCommand(request, cancellationToken);
             return await _dataBroker.ExecuteAsync<TRecord>(command);
         }
         catch (Exception e)
         {
-            return ErrorReponse(request.TransactionId, e.Message);
+            return CommandResult.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
         }
     }
 
-    private HttpResponseMessage ErrorReponse(Guid id, string message)
+    [Mvc.Route("/api/[controller]/updaterecordcommand")]
+    [Mvc.HttpPost]
+    public async Task<CommandResult> UpdateRecordCommand([FromBody] APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken)
     {
-        HttpResponseMessage response = new HttpResponseMessage();
-        response.Content = new StringContent($"<html><body><div>SometHing went seriously wrong with your requeast and has been logged with the Unique code of {id}</div><div>{message}</div></body></html>");
-        response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/html");
-        response.StatusCode = HttpStatusCode.InternalServerError;
-        return response;
+        try
+        {
+            UpdateRecordCommand<TRecord> command = UpdateRecordCommand<TRecord>.GetCommand(request, cancellationToken);
+            return await _dataBroker.ExecuteAsync<TRecord>(command);
+        }
+        catch (Exception e)
+        {
+            return CommandResult.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+        }
+    }
 
+    [Mvc.Route("/api/[controller]/deleterecordcommand")]
+    [Mvc.HttpPost]
+    public async Task<CommandResult> DeleteRecordCommand([FromBody] APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            DeleteRecordCommand<TRecord> command = DeleteRecordCommand<TRecord>.GetCommand(request, cancellationToken);
+            return await _dataBroker.ExecuteAsync<TRecord>(command);
+        }
+        catch (Exception e)
+        {
+            return CommandResult.Failure($"Something went seriously wrong - unique reference no: {request.TransactionId} - error detail: {e.Message}");
+        }
     }
 }

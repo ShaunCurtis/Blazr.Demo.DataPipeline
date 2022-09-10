@@ -12,8 +12,8 @@ public record FKListQuery<TFKRecord>
 {
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public CancellationToken CancellationToken { get; } = new CancellationToken();
+    public CancellationToken CancellationToken { get; init; } = default;
 
-    public static FKListQuery<TFKRecord> GetQuery(APIFKListQueryProviderRequest<TFKRecord> request)
-        => new FKListQuery<TFKRecord> { TransactionId = request.TransactionId };
+    public static FKListQuery<TFKRecord> GetQuery(APIFKListQueryProviderRequest<TFKRecord> request, CancellationToken cancellationToken = default)
+        => new FKListQuery<TFKRecord> { TransactionId = request.TransactionId, CancellationToken = cancellationToken };
 }

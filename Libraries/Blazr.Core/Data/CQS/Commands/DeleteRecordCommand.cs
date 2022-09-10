@@ -15,7 +15,7 @@ public record DeleteRecordCommand<TRecord>
     public static DeleteRecordCommand<TRecord> GetCommand(TRecord record)
         => new DeleteRecordCommand<TRecord> { Record = record};
 
-    public static DeleteRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request)
-        => new DeleteRecordCommand<TRecord> { TransactionId = request.TransactionId, Record = request.Record };
+    public static DeleteRecordCommand<TRecord> GetCommand(APICommandProviderRequest<TRecord> request, CancellationToken cancellationToken = default)
+        => new DeleteRecordCommand<TRecord> { TransactionId = request.TransactionId, Record = request.Record, CancellationToken = cancellationToken };
 
 }

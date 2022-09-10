@@ -21,7 +21,7 @@ public class IdentityQueryHandler<TDbContext>
         IQueryable<DboIdentity> queryable = dbContext.Set<DboIdentity>();
         if (queryable is not null)
         {
-            var record = await queryable.SingleOrDefaultAsync(item => item.Id == query.IdentityId);
+            var record = await queryable.SingleOrDefaultAsync(item => item.Id == query.IdentityId, query.CancellationToken);
             if (record is not null)
             {
                 var identity = new ClaimsIdentity(new[]

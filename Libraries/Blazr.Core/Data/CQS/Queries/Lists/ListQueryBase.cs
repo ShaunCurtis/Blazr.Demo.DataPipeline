@@ -22,10 +22,9 @@ public abstract record ListQueryBase<TRecord>
 
     public Guid TransactionId { get; init; } = Guid.NewGuid();
 
-    public CancellationToken CancellationToken { get; protected init; }
+    public CancellationToken CancellationToken { get; protected init; } = default;
 
-    protected ListQueryBase()
-        => this.CancellationToken = new CancellationToken();
+    protected ListQueryBase() { }
 
     protected ListQueryBase(ListProviderRequest<TRecord> request)
     {
@@ -37,13 +36,15 @@ public abstract record ListQueryBase<TRecord>
         this.CancellationToken = request.CancellationToken;
     }
 
-    protected ListQueryBase(APIListProviderRequest<TRecord> request)
+    protected ListQueryBase(APIListProviderRequest<TRecord> request, CancellationToken? cancellationToken = null)
     {
+        this.TransactionId = request.TransactionId;
         this.StartIndex = request.StartIndex;
         this.PageSize = request.PageSize;
         this.SortDescending = request.SortDescending;
         this.SortExpression = DeSerializeSorter(request.SortExpressionString);
         this.FilterExpression = DeSerializeFilter(request.FilterExpressionString);
+        this.CancellationToken = CancellationToken;
     }
 
     protected static Expression<Func<TRecord, bool>>? DeSerializeFilter(string? filter)
