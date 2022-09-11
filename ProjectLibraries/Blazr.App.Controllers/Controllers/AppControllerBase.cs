@@ -6,6 +6,7 @@
 
 namespace Blazr.App.Controllers;
 
+[TypeFilter(typeof(OperationCanceledException))]
 public abstract class AppControllerBase<TRecord>
     : ControllerBase
     where TRecord : class, new()
