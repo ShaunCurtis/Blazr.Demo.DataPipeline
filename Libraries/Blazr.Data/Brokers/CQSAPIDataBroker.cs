@@ -11,9 +11,13 @@ public class CQSAPIDataBroker
     : ICQSDataBroker
 {
     private HttpClient _httpClient;
+    private IIdentityProvider _identityProvider;
 
-    public CQSAPIDataBroker(HttpClient httpClient)
-        => _httpClient = httpClient;
+    public CQSAPIDataBroker(HttpClient httpClient, IIdentityProvider identityProvider )
+    { 
+           _httpClient = httpClient;
+        _identityProvider = identityProvider;
+    }
 
     public async ValueTask<ListProviderResult<TRecord>> ExecuteAsync<TRecord>(ListQuery<TRecord> query) where TRecord : class, new()
     {
@@ -114,5 +118,6 @@ public class CQSAPIDataBroker
     public ValueTask<object> ExecuteAsync<TRecord>(object query)
         => throw new NotImplementedException();
 
+    //TODO - Here
     protected virtual void SetHTTPClientSecurityHeader() { }
 }
