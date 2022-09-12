@@ -6,12 +6,12 @@
 
 namespace Blazr.Data;
 
-public class DeleteRecordCommandHandler<TRecord, TDbContext>
+public sealed class DeleteRecordCommandHandler<TRecord, TDbContext>
     : IHandlerAsync<DeleteRecordCommand<TRecord>, ValueTask<CommandResult>>
     where TDbContext : DbContext
     where TRecord : class, new()
 {
-    protected IDbContextFactory<TDbContext> factory;
+    private IDbContextFactory<TDbContext> factory;
 
     public DeleteRecordCommandHandler(IDbContextFactory<TDbContext> factory)
         => this.factory = factory;

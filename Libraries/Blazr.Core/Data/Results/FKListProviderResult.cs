@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record FKListProviderResult<TFkListItem>
+public sealed record FKListProviderResult<TFkListItem>
     where TFkListItem :IFkListItem
 {
     public IEnumerable<TFkListItem> Items { get; init; } = Enumerable.Empty<TFkListItem>();

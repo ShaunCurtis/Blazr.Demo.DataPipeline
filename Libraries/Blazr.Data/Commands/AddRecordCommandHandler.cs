@@ -5,12 +5,12 @@
 /// ============================================================
 namespace Blazr.Data;
 
-public class AddRecordCommandHandler<TRecord, TDbContext>
+public sealed class AddRecordCommandHandler<TRecord, TDbContext>
     : IHandlerAsync<AddRecordCommand<TRecord>, ValueTask<CommandResult>>
     where TDbContext : DbContext
     where TRecord : class, new()
 {
-    protected IDbContextFactory<TDbContext> factory;
+    private IDbContextFactory<TDbContext> factory;
 
     public AddRecordCommandHandler(IDbContextFactory<TDbContext> factory)
         => this.factory = factory;

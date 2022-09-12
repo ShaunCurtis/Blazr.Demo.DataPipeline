@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record FKListQuery<TFKRecord>
+public sealed record FKListQuery<TFKRecord>
     : IRequestAsync<ValueTask<FKListProviderResult<TFKRecord>>>
     where TFKRecord : class, IFkListItem, new()
 {

@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record CommandResult
+public sealed record CommandResult
 {
     public Guid NewId { get; init; } = Guid.Empty;
 

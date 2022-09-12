@@ -5,13 +5,13 @@
 /// ============================================================
 namespace Blazr.Data;
 
-public class FKListQueryHandler<TRecord, TDbContext>
+public sealed class FKListQueryHandler<TRecord, TDbContext>
     : IHandlerAsync<FKListQuery<TRecord>, ValueTask<FKListProviderResult<TRecord>>>
         where TDbContext : DbContext
         where TRecord : class, IFkListItem, new()
 {
-    protected IEnumerable<TRecord> items = Enumerable.Empty<TRecord>();
-    protected IDbContextFactory<TDbContext> factory;
+    private IEnumerable<TRecord> items = Enumerable.Empty<TRecord>();
+    private IDbContextFactory<TDbContext> factory;
 
     public FKListQueryHandler(IDbContextFactory<TDbContext> factory)
         => this.factory = factory;

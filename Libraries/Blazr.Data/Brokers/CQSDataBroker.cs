@@ -5,7 +5,7 @@
 /// ============================================================
 namespace Blazr.Data;
 
-public class CQSDataBroker<TDbContext>
+public sealed class CQSDataBroker<TDbContext>
     :ICQSDataBroker
     where TDbContext : DbContext
 {

@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record RecordProviderResult<TRecord>
+public sealed record RecordProviderResult<TRecord>
 {
     public TRecord? Record { get; init; } = default(TRecord?);
 

@@ -6,16 +6,15 @@
 
 namespace Blazr.Data;
 
-public class ListQueryHandler<TRecord, TDbContext>
+public sealed class ListQueryHandler<TRecord, TDbContext>
     : IListQueryHandler<TRecord>
         where TDbContext : DbContext
         where TRecord : class, new()
 {
-    protected IEnumerable<TRecord> items = Enumerable.Empty<TRecord>();
-    protected int count = 0;
-
-    protected IDbContextFactory<TDbContext> factory;
-    protected IListQuery<TRecord> listQuery = default!;
+    private IEnumerable<TRecord> items = Enumerable.Empty<TRecord>();
+    private int count = 0;
+    private readonly IDbContextFactory<TDbContext> factory;
+    private IListQuery<TRecord> listQuery = default!;
 
     public ListQueryHandler(IDbContextFactory<TDbContext> factory)
         => this.factory = factory;
@@ -33,7 +32,7 @@ public class ListQueryHandler<TRecord, TDbContext>
         return ListProviderResult<TRecord>.Successful(this.items, this.count);
     }
 
-    protected virtual async ValueTask<bool> GetItemsAsync()
+    private async ValueTask<bool> GetItemsAsync()
     {
         using var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
@@ -63,7 +62,7 @@ public class ListQueryHandler<TRecord, TDbContext>
         return true;
     }
 
-    protected virtual async ValueTask<bool> GetCountAsync()
+    private async ValueTask<bool> GetCountAsync()
     {
         using var dbContext = this.factory.CreateDbContext();
         dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;

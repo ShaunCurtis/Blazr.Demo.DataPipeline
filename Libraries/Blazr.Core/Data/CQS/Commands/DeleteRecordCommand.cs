@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record DeleteRecordCommand<TRecord>
+public sealed record DeleteRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
     where TRecord : class, new()
 {

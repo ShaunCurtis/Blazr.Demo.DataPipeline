@@ -7,15 +7,19 @@ using System.Net.Http.Json;
 
 namespace Blazr.Data;
 
-public class CQSAPIDataBroker
+public sealed class CQSAPIDataBroker
     : ICQSDataBroker
 {
     private HttpClient _httpClient;
-    private IIdentityProvider _identityProvider;
+    private IIdentityProvider? _identityProvider;
+    public CQSAPIDataBroker(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
 
-    public CQSAPIDataBroker(HttpClient httpClient, IIdentityProvider identityProvider )
-    { 
-           _httpClient = httpClient;
+    public CQSAPIDataBroker(HttpClient httpClient, IIdentityProvider identityProvider)
+    {
+        _httpClient = httpClient;
         _identityProvider = identityProvider;
     }
 
@@ -118,6 +122,12 @@ public class CQSAPIDataBroker
     public ValueTask<object> ExecuteAsync<TRecord>(object query)
         => throw new NotImplementedException();
 
-    //TODO - Here
-    protected virtual void SetHTTPClientSecurityHeader() { }
+    private void SetHTTPClientSecurityHeader()
+    {
+        if (!_httpClient.DefaultRequestHeaders.Contains("Authorization"))
+            _httpClient.DefaultRequestHeaders.Remove("Authorization");
+
+        if (!_httpClient.DefaultRequestHeaders.Contains("Authorization") && _identityProvider is not null)
+            _httpClient.DefaultRequestHeaders.Add("Authorization", _identityProvider.GetHttpSecurityHeader());
+    }
 }

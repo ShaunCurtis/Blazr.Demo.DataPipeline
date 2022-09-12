@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record ListQuery<TRecord>
+public sealed record ListQuery<TRecord>
     :ListQueryBase<TRecord>
     where TRecord : class, new()
 {

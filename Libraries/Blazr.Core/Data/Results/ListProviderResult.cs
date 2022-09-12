@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record ListProviderResult<TRecord>
+public sealed record ListProviderResult<TRecord>
 {
     public IEnumerable<TRecord> Items { get; init; } = Enumerable.Empty<TRecord>();
 

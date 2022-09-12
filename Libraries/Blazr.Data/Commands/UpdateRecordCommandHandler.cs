@@ -6,12 +6,12 @@
 
 namespace Blazr.Data;
 
-public class UpdateRecordCommandHandler<TRecord, TDbContext>
+public sealed class UpdateRecordCommandHandler<TRecord, TDbContext>
     : IHandlerAsync<UpdateRecordCommand<TRecord>, ValueTask<CommandResult>>
     where TDbContext : DbContext
     where TRecord : class, new()
 {
-    protected IDbContextFactory<TDbContext> factory;
+    private IDbContextFactory<TDbContext> factory;
 
     public UpdateRecordCommandHandler(IDbContextFactory<TDbContext> factory)
         => this.factory = factory;

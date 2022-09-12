@@ -6,7 +6,7 @@
 
 namespace Blazr.Core;
 
-public record UpdateRecordCommand<TRecord>
+public sealed record UpdateRecordCommand<TRecord>
      : RecordCommandBase<TRecord>
     where TRecord : class, new()
 {
